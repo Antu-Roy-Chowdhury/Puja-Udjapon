@@ -22,7 +22,7 @@ const activities = [
   },
   {
     id: 2,
-    name: "Special Events",
+    name: "Weekly Prayers",
     image: "/buddhist-monks-ceremony.png",
     description:
       "Join us for special ceremonial events throughout the year, including Buddha's Birthday, Vesak Day, and other significant Buddhist celebrations. These events bring our community together in prayer and celebration.",
@@ -32,7 +32,7 @@ const activities = [
   },
   {
     id: 3,
-    name: "Holi Festival",
+    name: "Special Events",
     image: "/buddhist-festival.png",
     description:
       "Celebrate the festival of colors with our Buddhist community. This joyous occasion combines traditional Holi celebrations with Buddhist teachings about joy, compassion, and unity.",
@@ -52,7 +52,7 @@ const activities = [
   },
   {
     id: 5,
-    name: "Buddhism Courses",
+    name: "Holi Festival",
     image: "/buddhist-prayer-flags-mountain-peaceful.png",
     description:
       "Comprehensive courses covering Buddhist philosophy, meditation techniques, and practical applications of Buddhist teachings in daily life. Perfect for beginners and advanced practitioners.",
