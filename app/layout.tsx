@@ -6,6 +6,7 @@ import { AuthProvider } from "@/components/auth-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import Image from "next/image"
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -20,9 +21,13 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Buddha Temple - Spiritual Community",
-  description: "Join our Buddhist community for meditation, spiritual growth, and enlightenment",
+  title: "সার্বজনীন পূজা উদযাপন পরিষদ, রুয়েট",
+  description: "Join our community for spiritual growth, and enlightenment",
   generator: "v0.app",
+    icons: {
+    icon: "/favicon.png", // 👈 This sets the favicon
+  },
+
 }
 
 export default function RootLayout({
