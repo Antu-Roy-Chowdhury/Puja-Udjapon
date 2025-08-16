@@ -162,12 +162,15 @@ export function Navigation() {
 
                 {user ? (
                   <>
-                    <Link href="/donate" className="text-primary font-semibold">Donate Now</Link>
-                    <Link href="/profile">Profile</Link>
-                    {user.role === "admin" && (
-                      <Link href="/admin">Admin Dashboard</Link>
-                    )}
-                    <button onClick={logout} className="text-red-600 text-left">Logout</button>
+                  <Button asChild className="bg-primary hover:bg-primary/90">
+                  <Link href="/donate">Donate Now</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Join Community</Link>
+                </Button>
                   </>
                 ) : (
                   <>
