@@ -13,7 +13,7 @@ const activities = [
     name: "Light Meditation",
     image: "/buddhist-meditation-cave-peaceful.png",
     description:
-      "Experience inner peace through guided light meditation sessions. Our experienced teachers will guide you through ancient Buddhist meditation techniques that help calm the mind and illuminate the path to enlightenment.",
+      "Experience inner peace through guided light meditation sessions. Our experienced teachers will guide you through ancient meditation techniques that help calm the mind and illuminate the path to enlightenment.",
     schedule: "Daily at 6:00 AM and 7:00 PM",
     duration: "45 minutes",
     level: "All levels welcome",
@@ -23,7 +23,7 @@ const activities = [
     name: "Weekly Prayers",
     image: "/buddhist-monks-ceremony.png",
     description:
-      "Join us for special ceremonial events throughout the year, including Buddha's Birthday, Vesak Day, and other significant Buddhist celebrations. These events bring our community together in prayer and celebration.",
+      "Join us for special ceremonial events throughout the year, including krisna's Birthday, Vesak Day, and other significant celebrations. These events bring our community together in prayer and celebration.",
     schedule: "Monthly special occasions",
     duration: "2-3 hours",
     level: "Open to all",
@@ -33,7 +33,7 @@ const activities = [
     name: "Special Events",
     image: "/buddhist-festival.png",
     description:
-      "Celebrate the festival of colors with our Buddhist community. This joyous occasion combines traditional Holi celebrations with Buddhist teachings about joy, compassion, and unity.",
+      "Celebrate the festival of colors with our community. This joyous occasion combines traditional Holi celebrations with teachings about joy, compassion, and unity.",
     schedule: "Annual celebration in March",
     duration: "Full day event",
     level: "Family friendly",
@@ -53,7 +53,7 @@ const activities = [
     name: "Holi Festival",
     image: "/buddhist-prayer-flags-mountain-peaceful.png",
     description:
-      "Comprehensive courses covering Buddhist philosophy, meditation techniques, and practical applications of Buddhist teachings in daily life. Perfect for beginners and advanced practitioners.",
+      "Comprehensive courses covering philosophy, meditation techniques, and practical applications of teachings in daily life. Perfect for beginners and advanced practitioners.",
     schedule: "Monthly course starts",
     duration: "8-week programs",
     level: "Beginner to advanced",
@@ -63,7 +63,7 @@ const activities = [
     name: "Dharma Study",
     image: "/buddha-meditation.png",
     description:
-      "Deep dive into Buddhist scriptures and teachings through guided study sessions. Explore the Four Noble Truths, Eightfold Path, and other fundamental Buddhist concepts.",
+      "Deep dive into scriptures and teachings through guided study sessions. Explore the Four Noble Truths, Eightfold Path, and other fundamental concepts.",
     schedule: "Twice weekly",
     duration: "90 minutes",
     level: "Intermediate",
@@ -82,7 +82,7 @@ export default function ActivitiesPage() {
             <Badge className="bg-orange-100 text-orange-800 mb-4">OUR ACTIVITIES</Badge>
             <h1 className="font-serif text-5xl font-bold text-gray-900 mb-6">Temple Programs & Activities</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover our diverse range of spiritual programs designed to nurture your Buddhist practice and connect
+              Discover our diverse range of spiritual programs designed to nurture your practice and connect
               with our community
             </p>
           </div>

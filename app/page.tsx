@@ -395,7 +395,7 @@ export default function HomePage() {
                       {article.title}
                     </h3>
                     <p className="text-gray-600 mb-4 leading-relaxed">
-                      Aendreit eu ipsumunc eleifend nulla tortor tortor vehicul quamac uis et. Morbi auctor.
+                      Kapil deb has posted that the temple is now open for worship. And you can join us to pray.
                     </p>
                     <div className="flex items-center space-x-2 text-sm text-gray-500">
                       <Image src="/kapil.jpg" alt="Temple" width={20} height={20} className="rounded-full" />
