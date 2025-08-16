@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import { useAuth } from "./auth-provider"
 import { Button } from "./ui/button"
 import { LogOut, User, Settings, Menu, X } from "lucide-react"
@@ -17,6 +18,7 @@ export function Navigation() {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
 
   // Close on outside click or Escape key
   useEffect(() => {
@@ -67,12 +69,12 @@ export function Navigation() {
 
           {/* Navigation Links (Desktop) */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-primary">Home</Link>
-            <Link href="/activities" className="text-gray-700 hover:text-primary">Activities</Link>
-            <Link href="/events" className="text-gray-700 hover:text-primary">Events</Link>
-            <Link href="/gallery" className="text-gray-700 hover:text-primary">Gallery</Link>
-            <Link href="/members" className="text-gray-700 hover:text-primary">Members</Link>
-            <Link href="/contact" className="text-gray-700 hover:text-primary">Contact</Link>
+            <Link href="/" className={`hover:text-primary ${pathname === "/" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Home</Link>
+            <Link  href="/activities" className={`hover:text-primary ${pathname === "/activities" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Activities</Link>
+            <Link href="/events" className={`hover:text-primary ${pathname === "/events" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Events</Link>
+            <Link href="/gallery" className={`hover:text-primary ${pathname === "/gallery" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Gallery</Link>
+            <Link href="/members" className={`hover:text-primary ${pathname === "/members" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Members</Link>
+            <Link href="/contact" className={`hover:text-primary ${pathname === "/contact" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Contact</Link>
           </div>
 
           {/* Auth Section (Desktop) */}
@@ -151,12 +153,12 @@ export function Navigation() {
 
               {/* Navigation Links */}
               <nav className="flex flex-col gap-4 text-lg">
-                <Link href="/" className="hover:text-primary">Home</Link>
-                <Link href="/activities" className="hover:text-primary">Activities</Link>
-                <Link href="/events" className="hover:text-primary">Events</Link>
-                <Link href="/gallery" className="hover:text-primary">Gallery</Link>
-                <Link href="/members" className="hover:text-primary">Members</Link>
-                <Link href="/contact" className="hover:text-primary">Contact</Link>
+            <Link href="/" className={`hover:text-primary ${pathname === "/" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Home</Link>
+            <Link  href="/activities" className={`hover:text-primary ${pathname === "/activities" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Activities</Link>
+            <Link href="/events" className={`hover:text-primary ${pathname === "/events" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Events</Link>
+            <Link href="/gallery" className={`hover:text-primary ${pathname === "/gallery" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Gallery</Link>
+            <Link href="/members" className={`hover:text-primary ${pathname === "/members" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Members</Link>
+            <Link href="/contact" className={`hover:text-primary ${pathname === "/contact" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Contact</Link>
 
                 {user ? (
                   <>
