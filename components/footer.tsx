@@ -71,7 +71,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
           <p>&copy; 2025 RUET Temple. All rights reserved.</p>
-          <p>Developed by <span className="text-primary">Antu Roy Chowdhury </span> </p>
+          <p>Developed by <span className="text-primary/80"><Link href="https://anturoychowdhury.vercel.app/" target="_blank" className="hover: hover:text-primary text-shadow-md transition-colors">Antu Roy Chowdhury </Link></span> </p>
         </div>
       </div>
     </footer>

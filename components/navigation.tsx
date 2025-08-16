@@ -82,7 +82,7 @@ export function Navigation() {
             {user ? (
               <>
                 <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="/donate">Donate Now</Link>
+                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -116,7 +116,7 @@ export function Navigation() {
             ) : (
               <>
                 <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="/donate">Donate Now</Link>
+                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link href="/login">Login</Link>
@@ -163,7 +163,7 @@ export function Navigation() {
                 {user ? (
                   <>
                   <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="/donate">Donate Now</Link>
+                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link href="/login">Login</Link>
@@ -175,7 +175,7 @@ export function Navigation() {
                 ) : (
                   <>
                 <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="/donate">Donate Now</Link>
+                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link href="/login">Login</Link>

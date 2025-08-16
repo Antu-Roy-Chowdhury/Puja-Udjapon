@@ -12,6 +12,8 @@ interface User {
   isApproved: boolean
   department?: string
   series?: string
+  bloodGroup?: string
+  contact?: string
   photo?: string
 }
 
@@ -37,10 +39,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // For now, mock user data
       setUser({
         id: "1",
-        name: "John Doe",
-        email: "john@example.com",
-        role: "member",
+        name: "Antu Roy Chowdhury",
+        email: "anturoychowdhury3@gmail.com",
+        role: "admin",
+        department: "ETE",
+        series: "2020",
+        bloodGroup: "B+",
+        contact: "01700000000",
         isApproved: true,
+        photo: "/dev.jpg"
       })
     }
     setIsLoading(false)
@@ -52,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (email === "admin@temple.com" && password === "admin") {
         const adminUser = {
           id: "1",
-          name: "Admin User",
+          name: "Antu Roy Chowdhury",
           email: "admin@temple.com",
           role: "admin" as const,
           isApproved: true,
