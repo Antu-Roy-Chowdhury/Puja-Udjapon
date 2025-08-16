@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bloodGroup: "B+",
         contact: "01700000000",
         isApproved: true,
-        photo: "/dev.jpg"
+        photo: "https://github.com/Antu-Roy-Chowdhury/Puja-Udjapon/blob/main/public/dev.jpg"
       })
     }
     setIsLoading(false)
