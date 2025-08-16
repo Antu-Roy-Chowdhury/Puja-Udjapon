@@ -138,7 +138,7 @@ export function Navigation() {
             {/* Slide-in Menu */}
             <div
               ref={menuRef}
-              className="fixed top-0 right-0 w-full sm:w-1/2 h-screen bg-white shadow-lg p-6 space-y-6 transform transition-transform duration-300 ease-in-out translate-x-0 "
+              className="fixed top-0 right-0 w-1/2 h-screen bg-white shadow-lg p-6 space-y-6 transform transition-transform duration-300 ease-in-out translate-x-0 "
               role="dialog"
               aria-modal="true"
             >
