@@ -131,14 +131,14 @@ export function Navigation() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-50 overflow-hidden">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
             {/* Slide-in Menu */}
             <div
               ref={menuRef}
-              className="absolute top-0 right-0 w-1/2 h-screen bg-white shadow-lg p-6 space-y-6 transform transition-transform duration-300 ease-in-out translate-x-0"
+              className="fixed top-0 right-0 w-full sm:w-1/2 h-screen bg-white shadow-lg p-6 space-y-6 transform transition-transform duration-300 ease-in-out translate-x-0 "
               role="dialog"
               aria-modal="true"
             >
@@ -153,12 +153,12 @@ export function Navigation() {
 
               {/* Navigation Links */}
               <nav className="flex flex-col gap-4 text-lg">
-            <Link href="/" className={`hover:text-primary ${pathname === "/" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Home</Link>
-            <Link  href="/activities" className={`hover:text-primary ${pathname === "/activities" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Activities</Link>
-            <Link href="/events" className={`hover:text-primary ${pathname === "/events" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Events</Link>
-            <Link href="/gallery" className={`hover:text-primary ${pathname === "/gallery" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Gallery</Link>
-            <Link href="/members" className={`hover:text-primary ${pathname === "/members" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Members</Link>
-            <Link href="/contact" className={`hover:text-primary ${pathname === "/contact" ? "text-primary border-b-2 border-primary font-semibold" : "text-gray-700"}`}>Contact</Link>
+            <Link href="/" className={`hover:text-primary ${pathname === "/" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Home</Link>
+            <Link  href="/activities" className={`hover:text-primary ${pathname === "/activities" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Activities</Link>
+            <Link href="/events" className={`hover:text-primary ${pathname === "/events" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Events</Link>
+            <Link href="/gallery" className={`hover:text-primary ${pathname === "/gallery" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Gallery</Link>
+            <Link href="/members" className={`hover:text-primary ${pathname === "/members" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Members</Link>
+            <Link href="/contact" className={`hover:text-primary ${pathname === "/contact" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Contact</Link>
 
                 {user ? (
                   <>
