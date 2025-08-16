@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, MapPin, Clock, Users } from "lucide-react"
 
 const events = [
-  { id: 1, name: "Sri Kirsna's Janmashtami", subtitle: "Krisnas Name Conferment Ceremony", date: "2024-08-16", time: "5:00 PM - 8:30 PM", location: "RUET Temple", description: "A transformative weekend retreat focusing on blessing empowerment and spiritual renewal.", capacity: 50, registered: 32, month: "August" },
-  { id: 2, name: "Leo Sankranti", subtitle: "", date: "2024-08-17", time: "7:00 PM - 9:00 PM", location: "Meditation Garden", description: "Peaceful candlelight meditation session under the stars.", capacity: 30, registered: 18, month: "August" },
-  { id: 3, name: "Annada Ekadashi", subtitle: "Name Conferment Ceremony", date: "2024-08-19", time: "7:00 PM - 9:00 PM", location: "Ceremony Hall", description: "Special ceremony for dharma name conferment and authentication.", capacity: 40, registered: 25, month: "August" },
-  { id: 4, name: "Ganesh Chaturthi", subtitle: "", date: "2024-08-27", time: "7:00 PM - 9:00 PM", location: "Temple Grounds", description: "Annual celebration of Buddha's birthday with traditional ceremonies.", capacity: 100, registered: 67, month: "August" },
+  { id: 1, name: "Sri Kirsna's Janmashtami", subtitle: "Krisnas Name Conferment Ceremony", date: "2025-08-16", time: "5:00 PM - 8:30 PM", location: "RUET Temple", description: "A transformative weekend retreat focusing on blessing empowerment and spiritual renewal.", capacity: 50, registered: 32, month: "August" },
+  { id: 2, name: "Leo Sankranti", subtitle: "", date: "2025-08-17", time: "7:00 PM - 9:00 PM", location: "Meditation Garden", description: "Peaceful candlelight meditation session under the stars.", capacity: 30, registered: 18, month: "August" },
+  { id: 3, name: "Annada Ekadashi", subtitle: "Name Conferment Ceremony", date: "2025-08-19", time: "7:00 PM - 9:00 PM", location: "Ceremony Hall", description: "Special ceremony for dharma name conferment and authentication.", capacity: 40, registered: 25, month: "August" },
+  { id: 4, name: "Ganesh Chaturthi", subtitle: "", date: "2025-08-27", time: "7:00 PM - 9:00 PM", location: "Temple Grounds", description: "Annual celebration of Buddha's birthday with traditional ceremonies.", capacity: 100, registered: 67, month: "August" },
   { id: 5, name: "New Year Meditation Retreat", subtitle: "3-Day Silent Retreat", date: "2025-01-01", time: "6:00 AM - 8:00 PM", location: "Retreat Center", description: "Welcome the new year with a transformative 3-day silent meditation retreat.", capacity: 25, registered: 15, month: "January" },
   { id: 6, name: "Lunar New Year Festival", subtitle: "Community Celebration", date: "2025-02-10", time: "10:00 AM - 6:00 PM", location: "Temple Complex", description: "Celebrate Lunar New Year with traditional ceremonies, food, and community activities.", capacity: 200, registered: 89, month: "February" },
 ]
@@ -22,36 +22,65 @@ export default function EventsPage() {
   const [selectedMonth, setSelectedMonth] = useState("August")
 
   // Filter events by month
-  const filteredEvents = selectedMonth === "All"
-    ? events
-    : events.filter((event) => event.month === selectedMonth)
+  const filteredEvents = selectedMonth === "All"    ? events    : events.filter((event) => event.month === selectedMonth)
 
   // Function to get correct days and start weekday for 2025
-  const getCalendarDays = () => {
-    let year = 2025
-    let monthIndex = selectedMonth === "August" ? new Date().getMonth() : months.indexOf(selectedMonth) - 1
-    let daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-    let firstDay = new Date(year, monthIndex, 1).getDay() // 0 = Sunday
-    let daysArray = []
+  const getCalendarData = () => {
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth()
 
-    // Add empty slots for days before month starts
-    for (let i = 0; i < firstDay; i++) {
-      daysArray.push(null)
+    // Determine which month/year to show in calendar
+    let displayMonth = currentMonth
+    let displayYear = currentYear
+
+    if (selectedMonth !== "All") {
+      const monthIndex = months.indexOf(selectedMonth) - 1 // -1 because "All" is at index 0
+      if (monthIndex >= 0) {
+        displayMonth = monthIndex
+        // Set year based on the events data
+        const monthEvents = events.filter((event) => event.month === selectedMonth)
+        if (monthEvents.length > 0) {
+          displayYear = new Date(monthEvents[0].date).getFullYear()
+        }
+      }
     }
+
+    const daysInMonth = new Date(displayYear, displayMonth + 1, 0).getDate()
+    const firstDayOfWeek = new Date(displayYear, displayMonth, 1).getDay()
+
+    // Create calendar grid
+    const calendarDays = []
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      calendarDays.push(null)
+    }
+
     // Add actual days
     for (let day = 1; day <= daysInMonth; day++) {
-      daysArray.push(day)
+      calendarDays.push(day)
     }
-    return daysArray
+
+    // Get events for this specific month/year
+    const monthEvents = events.filter((event) => {
+      const eventDate = new Date(event.date)
+      return eventDate.getMonth() === displayMonth && eventDate.getFullYear() === displayYear
+    })
+
+    const eventDays = monthEvents.map((event) => new Date(event.date).getDate())
+
+    return {
+      calendarDays,
+      eventDays,
+      displayYear,
+      displayMonth,
+      monthName: new Date(displayYear, displayMonth).toLocaleDateString("en-US", { month: "long" }),
+      today,
+    }
   }
 
-  const calendarDays = getCalendarDays()
-
-  const eventDates = filteredEvents.map(event => ({
-    day: new Date(event.date).getDate(),
-    month: new Date(event.date).getMonth(),
-    year: new Date(event.date).getFullYear()
-  }))
+  const { calendarDays, eventDays, displayYear, displayMonth, monthName, today } = getCalendarData()
 
   return (
     <div className="min-h-screen">
@@ -85,27 +114,40 @@ export default function EventsPage() {
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-2">
-                  {calendarDays.map((day, idx) => {
-                    const isEventDay = day !== null && eventDates.some(d => d.day === day)
+                 <div className="grid grid-cols-7 gap-2">
+                  {calendarDays.map((day, index) => {
+                    const isToday =
+                      day &&
+                      today.getDate() === day &&
+                      today.getMonth() === displayMonth &&
+                      today.getFullYear() === displayYear
+                    const hasEvent = day && eventDays.includes(day)
+
                     return (
                       <div
-                        key={idx}
+                        key={index}
                         className={`
-                          text-center py-2 text-sm rounded-lg cursor-pointer transition-colors
-                          ${day === null ? "bg-transparent cursor-default" : ""}
-                          ${isEventDay ? "bg-primary text-white font-bold hover:bg-primary/90" : day ? "hover:bg-gray-100" : ""}
+                          text-center py-2 text-sm rounded-lg cursor-pointer transition-colors min-h-[32px] flex items-center justify-center
+                          ${day === null ? "invisible" : ""}
+                          ${isToday ? "border-3 border-green-500 text-white font-bold rounded-lg" : ""}
+                          ${hasEvent ? " bg-primary text-white font-bold hover:bg-primary/90" : "hover:bg-gray-100"}
                         `}
                       >
-                        {day || ""}
+                        {day}
                       </div>
                     )
                   })}
                 </div>
                 <div className="mt-4 text-center">
-                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-                    <div className="w-3 h-3 bg-primary rounded-full"></div>
-                    <span>Event Days</span>
+                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-primary rounded-full"></div>
+                      <span>Event Days</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-lg"></div>
+                      <span>Today</span>
+                    </div>
                   </div>
                 </div>
               </Card>
