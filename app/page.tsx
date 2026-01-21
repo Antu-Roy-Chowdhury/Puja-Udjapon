@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Play } from "lucide-react"
 import Image from "next/image"
+import { Clock } from "lucide-react"
 import {
   Carousel,
   CarouselContent,
@@ -24,7 +25,7 @@ export default function HomePage() {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url('/images/buddha-hero.jpg')`,
+              backgroundImage: `url('https://res.cloudinary.com/djt70cy8p/image/upload/v1768999776/hero_qytbzo.jpg')`,
             }}
           />
           <div className="absolute inset-0 bg-black/50" />
@@ -123,8 +124,8 @@ export default function HomePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <Image
-                    src="/buddha-meditation.png"
-                    alt="Buddha statue"
+                    src="https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-meditation-cave-peaceful_c9hc1o.jpg"
+                    alt="Prayers"
                     width={250}
                     height={300}
                     className="rounded-lg object-cover"
@@ -132,8 +133,8 @@ export default function HomePage() {
                 </div>
                 <div className="space-y-4 pt-8">
                   <Image
-                    src="/buddhist-temple-garden-meditation.png"
-                    alt="Temple garden"
+                    src="https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-festival_sdw7pq.jpg"
+                    alt="durga ma"
                     width={250}
                     height={250}
                     className="rounded-lg object-cover"
@@ -173,7 +174,7 @@ export default function HomePage() {
 
         <Carousel  opts={{ loop: true}}>
           <CarouselContent>
-            {["/Gallery/1.jpg", "/Gallery/6.jpg", "/Gallery/3.jpg", "/Gallery/4.jpg", "/Gallery/5.jpg"].map((src, i) => (
+            {["https://res.cloudinary.com/djt70cy8p/image/upload/v1768999799/library_epfqi4.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999780/buddhist-prayer-flags-mountain-peaceful_dngprz.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999710/6_n0ok2t.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999688/7_tzvnuj.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999697/5_tgk5ow.jpg"].map((src, i) => (
               <CarouselItem key={i} >
                 <Image
                   src={src}
@@ -192,69 +193,95 @@ export default function HomePage() {
     </section>
 
         {/* Upcoming Events Section */}
-        <section className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <Badge className="bg-orange-100 text-orange-500 mb-4">Events</Badge>
-              <h2 className="font-serif text-4xl font-bold text-gray-900">Upcoming Events</h2>
+<section className="py-16">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-12">
+      <Badge className="bg-orange-100 text-orange-500 mb-4">Events</Badge>
+      <h2 className="font-serif text-4xl font-bold text-gray-900">Upcoming Events</h2>
+    </div>
+    <div className="space-y-6">
+      {[
+        {
+          title: "Vasant Panchami",
+          subtitle: "Saraswati Puja & Celebration of Wisdom",
+          time: "9:00 AM - 1:30 PM",
+          date: "2026-JAN-23",
+          location: "RUET Temple",
+        },
+        {
+          title: "Maha Shivaratri",
+          subtitle: "The Great Night of Lord Shiva",
+          time: "6:00 PM - 6:00 AM",
+          date: "2026-FEB-15",
+          location: "Main Sanctuary",
+        },
+        {
+          title: "Holi Festival",
+          subtitle: "Festival of Colors & Divine Love",
+          time: "8:00 AM - 4:00 PM",
+          date: "2026-MAR-04",
+          location: "Temple Grounds",
+        },
+        {
+          title: "Rama Navami",
+          subtitle: "Appearance Day of Lord Sri Ramacandra",
+          time: "11:00 AM - 2:00 PM",
+          date: "2026-MAR-27",
+          location: "Ceremony Hall",
+        },
+        {
+          title: "Hanuman Jayanti",
+          subtitle: "Celebration of Devotion and Strength",
+          time: "7:00 AM - 10:00 AM",
+          date: "2026-APR-02",
+          location: "Main Sanctuary",
+        },
+        {
+          title: "Akshaya Tritiya",
+          subtitle: "Auspicious Day for New Beginnings",
+          time: "7:30 AM - 12:00 PM",
+          date: "2026-APR-19",
+          location: "RUET Temple",
+        },
+      ].map((event, index) => (
+        <Card key={index} className="p-6 transition-all hover:shadow-md">
+          <CardContent className="p-0">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-6 w-full">
+                <div className="text-center min-w-[60px]">
+                  <div className="text-3xl font-bold text-gray-900">{event.date.split("-")[2]}</div>
+                  <div className="text-sm text-orange-500 font-semibold">{event.date.split("-")[1]}</div>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-900">{event.title}</h3>
+                  {event.subtitle && <p className="text-gray-600 text-sm">{event.subtitle}</p>}
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-end">
+                <div className="flex flex-col items-end text-gray-600">
+                  <div className="flex items-center text-sm">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>{event.time}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{event.location}</span>
+                  </div>
+                </div>
+                <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
+                  <Link href="/events">View Details</Link>
+                </Button>
+              </div>
             </div>
-            <div className="space-y-6">
-              {[
-                {
-                  title: "Sri Kirsna's Janmashtami",
-                  subtitle: "Krisnas Name Conferment Ceremony",
-                  time: "5:00 PM - 8:30 PM",
-                  date: "2023-AUG-16",
-                },
-                {
-                  title: "Leo Sankranti",
-                  subtitle: "",
-                  time: "7:00 PM - 9:00 PM",
-                  date: "2023-AUG-17",
-                },
-                {
-                  title: "Annada Ekadashi",
-                  subtitle: "",
-                  time: "7:00 PM - 9:00 PM",
-                  date: "2023-AUG-19",
-                },
-                {
-                  title: "Ganesh Chaturthi",
-                  subtitle: "",
-                  time: "7:00 PM - 9:00 PM",
-                  date: "2023-AUG-27",
-                },
-              ].map((event, index) => (
-                <Card key={index} className="p-6">
-                  <CardContent className="p-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-6">
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-gray-900">{event.date.split("-")[2]}</div>
-                          <div className="text-sm text-orange-500 font-semibold">{event.date.split("-")[1]}</div>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg text-gray-900">{event.title}</h3>
-                          {event.subtitle && <p className="text-gray-600">{event.subtitle}</p>}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center text-gray-600">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          <span className="text-sm">{event.time}</span>
-                        </div>
-                        <Button className="bg-primary hover:bg-primary/90"><Link href="/events">View Detais</Link></Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
 
         {/* What We Offer Section */}
         <section className="py-16 bg-gray-50">
@@ -267,32 +294,32 @@ export default function HomePage() {
               {[
                 {
                   title: "Light Meditation",
-                  image: "/buddhist-meditation-cave-peaceful.png",
+                  image: "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-meditation-cave-peaceful_c9hc1o.jpg",
                   buttonColor: "bg-green-500 hover:bg-green-600",
                 },
                 {
                   title: "Weekly Prayers",
-                  image: "/buddhist-monks-ceremony.png",
+                  image: "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999666/4_tcaa4z.jpg",
                   buttonColor: "bg-orange-500 hover:bg-orange-600",
                 },
                 {
                   title: "Special Events",
-                  image: "/buddhist-festival.png",
+                  image: "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999672/3_o2ybro.jpg",
                   buttonColor: "bg-green-500 hover:bg-green-600",
                 },
                 {
                   title: "Ongoing Programs",
-                  image: "/buddhist-temple-doors.png",
+                  image: "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999799/library_epfqi4.jpg",
                   buttonColor: "bg-green-500 hover:bg-green-600",
                 },
                 {
                   title: "Holi Festival",
-                  image: "/buddhist-prayer-flags-mountain-peaceful.png",
+                  image: "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999697/5_tgk5ow.jpg",
                   buttonColor: "bg-green-500 hover:bg-green-600",
                 },
                 {
                   title: "Library",
-                  image: "/library.jpg",
+                  image: "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999698/8_syiu89.jpg",
                   buttonColor: "bg-green-500 hover:bg-green-600",
                 },
               ].map((activity, index) => (
@@ -326,8 +353,8 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <Image
-                  src="/buddha-profile-meditation.png"
-                  alt="Buddha statue"
+                  src="https://res.cloudinary.com/djt70cy8p/image/upload/v1768999778/buddha-profile-meditation_rlao4n.jpg"
+                  alt="Shiva"
                   width={400}
                   height={400}
                   className="rounded-lg object-cover"
