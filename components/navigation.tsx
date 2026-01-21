@@ -82,7 +82,7 @@ export function Navigation() {
             {user ? (
               <>
                 <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
+                  <Link href="/donate">Donate Now</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -98,9 +98,9 @@ export function Navigation() {
                         <span>Profile</span>
                       </Link>
                     </DropdownMenuItem>
-                    {user.role === "admin" && (
+                    {(user.role === "admin" || user.role === "super_admin") && (
                       <DropdownMenuItem asChild>
-                        <Link href="/admin" className="flex items-center space-x-2">
+                        <Link href="/profile?tab=admin" className="flex items-center space-x-2">
                           <Settings className="w-4 h-4" />
                           <span>Admin Dashboard</span>
                         </Link>
@@ -116,7 +116,7 @@ export function Navigation() {
             ) : (
               <>
                 <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
+                  <Link href="/donate">Donate Now</Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link href="/login">Login</Link>
@@ -163,19 +163,24 @@ export function Navigation() {
                 {user ? (
                   <>
                   <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
+                  <Link href="/donate">Donate Now</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link href="/login">Login</Link>
+                  <Link href="/profile">My Profile</Link>
                 </Button>
-                <Button asChild>
-                  <Link href="/signup">Join Community</Link>
+                {(user.role === "admin" || user.role === "super_admin") && (
+                  <Button asChild variant="outline">
+                    <Link href="/profile?tab=admin">Admin Dashboard</Link>
+                  </Button>
+                )}
+                <Button asChild variant="destructive" onClick={() => { logout(); setMenuOpen(false) }}>
+                  Logout
                 </Button>
                   </>
                 ) : (
                   <>
                 <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSf_WNPyuCcnzl9RLixmsjiLhgWBlIRdKgClBsWqiLSBKAPOaA/viewform?usp=sharing&ouid=104698273653886529401" target="_blank">Donate Now</Link>
+                  <Link href="/donate">Donate Now</Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link href="/login">Login</Link>

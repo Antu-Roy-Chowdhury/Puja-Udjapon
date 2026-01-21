@@ -1,87 +1,124 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, MapPin, Clock, Users } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
-const events = [
-  { id: 1, name: "Sri Kirsna's Janmashtami", subtitle: "Krisnas Name Conferment Ceremony", date: "2025-08-16", time: "5:00 PM - 8:30 PM", location: "RUET Temple", description: "A transformative weekend retreat focusing on blessing empowerment and spiritual renewal.", capacity: 50, registered: 32, month: "August" },
-  { id: 2, name: "Leo Sankranti", subtitle: "", date: "2025-08-17", time: "7:00 PM - 9:00 PM", location: "Meditation Garden", description: "Peaceful candlelight meditation session under the stars.", capacity: 30, registered: 18, month: "August" },
-  { id: 3, name: "Annada Ekadashi", subtitle: "Name Conferment Ceremony", date: "2025-08-19", time: "7:00 PM - 9:00 PM", location: "Ceremony Hall", description: "Special ceremony for dharma name conferment and authentication.", capacity: 40, registered: 25, month: "August" },
-  { id: 4, name: "Ganesh Chaturthi", subtitle: "", date: "2025-08-27", time: "7:00 PM - 9:00 PM", location: "Temple Grounds", description: "Annual celebration of Buddha's birthday with traditional ceremonies.", capacity: 100, registered: 67, month: "August" },
-  { id: 5, name: "New Year Meditation Retreat", subtitle: "3-Day Silent Retreat", date: "2025-01-01", time: "6:00 AM - 8:00 PM", location: "Retreat Center", description: "Welcome the new year with a transformative 3-day silent meditation retreat.", capacity: 25, registered: 15, month: "January" },
-  { id: 6, name: "Lunar New Year Festival", subtitle: "Community Celebration", date: "2025-02-10", time: "10:00 AM - 6:00 PM", location: "Temple Complex", description: "Celebrate Lunar New Year with traditional ceremonies, food, and community activities.", capacity: 200, registered: 89, month: "February" },
+
+
+const months = [
+  "All","January","February","March","April","May","June",
+  "July","August","September","October","November","December"
 ]
 
-const months = ["All","January","February","March","April","May","June","July","August","September","October","November","December"]
-
 export default function EventsPage() {
-  const [selectedMonth, setSelectedMonth] = useState("August")
+  // =========================
+  // STATE
+  // =========================
+  const [events, setEvents] = useState<any[]>([])
+  const [selectedMonth, setSelectedMonth] = useState("All")
+  const eventRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-  // Filter events by month
-  const filteredEvents = selectedMonth === "All"    ? events    : events.filter((event) => event.month === selectedMonth)
+  const today = new Date()
 
-  // Function to get correct days and start weekday for 2025
-  const getCalendarData = () => {
-    const today = new Date()
-    const currentYear = today.getFullYear()
-    const currentMonth = today.getMonth()
+  const [calendarMonth, setCalendarMonth] = useState(today.getMonth()) // 0–11
+  const [calendarYear, setCalendarYear] = useState(today.getFullYear())
 
-    // Determine which month/year to show in calendar
-    let displayMonth = currentMonth
-    let displayYear = currentYear
+  // =========================
+  // FETCH EVENTS (Google Calendar)
+  // =========================
+  useEffect(() => {
+    fetch("/api/events")
+      .then(res => res.json())
+      .then(setEvents)
+      .catch(console.error)
+  }, [])
 
+  // =========================
+  // AUTO-FOCUS FIRST EVENT
+  // =========================
+  useEffect(() => {
+    if (events.length > 0 && selectedMonth === "All") {
+      const firstDate = new Date(events[0].date)
+      setCalendarMonth(firstDate.getMonth())
+      setCalendarYear(firstDate.getFullYear())
+      setSelectedMonth(firstDate.toLocaleString("en-US", { month: "long" }))
+    }
+  }, [events])
+
+  // =========================
+  // SYNC MONTH DROPDOWN → CALENDAR
+  // =========================
+  useEffect(() => {
     if (selectedMonth !== "All") {
-      const monthIndex = months.indexOf(selectedMonth) - 1 // -1 because "All" is at index 0
-      if (monthIndex >= 0) {
-        displayMonth = monthIndex
-        // Set year based on the events data
-        const monthEvents = events.filter((event) => event.month === selectedMonth)
-        if (monthEvents.length > 0) {
-          displayYear = new Date(monthEvents[0].date).getFullYear()
+      const index = months.indexOf(selectedMonth) - 1
+      if (index >= 0) setCalendarMonth(index)
+    }
+  }, [selectedMonth])
+
+  // =========================
+  // CALENDAR DATA (SINGLE SOURCE)
+  // =========================
+  const {
+    calendarDays,
+    eventDays,
+    displayMonth,
+    displayYear,
+    monthName,
+  } = useMemo(() => {
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
+    const firstDayOfWeek = new Date(calendarYear, calendarMonth, 1).getDay()
+
+const calendarDays: (number | null)[] = []
+    for (let i = 0; i < firstDayOfWeek; i++) calendarDays.push(null)
+    for (let d = 1; d <= daysInMonth; d++) calendarDays.push(d)
+
+    // 2. Multi-day event highlighting logic
+    const eventDaysSet = new Set<number>()
+
+    events.forEach(e => {
+      // Use startDate and endDate from your API response
+      const start = new Date(e.startDate)
+      const end = new Date(e.endDate)
+
+      const current = new Date(start)
+      
+      // Loop through every day between start and end
+      while (current <= end) {
+        if (
+          current.getMonth() === calendarMonth &&
+          current.getFullYear() === calendarYear
+        ) {
+          eventDaysSet.add(current.getDate())
         }
+        current.setDate(current.getDate() + 1)
       }
-    }
-
-    const daysInMonth = new Date(displayYear, displayMonth + 1, 0).getDate()
-    const firstDayOfWeek = new Date(displayYear, displayMonth, 1).getDay()
-
-    // Create calendar grid
-    const calendarDays = []
-
-    // Add empty cells for days before month starts
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      calendarDays.push(null)
-    }
-
-    // Add actual days
-    for (let day = 1; day <= daysInMonth; day++) {
-      calendarDays.push(day)
-    }
-
-    // Get events for this specific month/year
-    const monthEvents = events.filter((event) => {
-      const eventDate = new Date(event.date)
-      return eventDate.getMonth() === displayMonth && eventDate.getFullYear() === displayYear
     })
-
-    const eventDays = monthEvents.map((event) => new Date(event.date).getDate())
 
     return {
       calendarDays,
-      eventDays,
-      displayYear,
-      displayMonth,
-      monthName: new Date(displayYear, displayMonth).toLocaleDateString("en-US", { month: "long" }),
-      today,
+      eventDays: Array.from(eventDaysSet), // Convert Set back to Array for the .includes() check
+      displayMonth: calendarMonth,
+      displayYear: calendarYear,
+      monthName: months[calendarMonth + 1],
     }
-  }
+  }, [events, calendarMonth, calendarYear])
 
-  const { calendarDays, eventDays, displayYear, displayMonth, monthName, today } = getCalendarData()
+  // =========================
+  // FILTERED EVENTS
+  // =========================
+  const filteredEvents =
+    selectedMonth === "All"
+      ? events
+      : events.filter(e => e.month === selectedMonth)
 
+  // =========================
+  // JSX
+  // =========================
   return (
     <div className="min-h-screen">
       <main>
@@ -99,60 +136,128 @@ export default function EventsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Calendar Section */}
-            <div className="lg:col-span-1">
-              <Card className="p-6">
-                <h3 className="font-serif text-2xl font-bold text-gray-900 mb-6 text-center">Event Calendar</h3>
-                <div className="flex items-center justify-center mb-4">
-                  <div className="text-center text-sm font-semibold text-gray-600 py-2">
-                    {selectedMonth === "All" ? months[new Date().getMonth() + 1] : selectedMonth} 2025
-                  </div>
-                </div>
-                <div className="grid grid-cols-7 gap-2 mb-4">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                 <div className="grid grid-cols-7 gap-2">
-                  {calendarDays.map((day, index) => {
-                    const isToday =
-                      day &&
-                      today.getDate() === day &&
-                      today.getMonth() === displayMonth &&
-                      today.getFullYear() === displayYear
-                    const hasEvent = day && eventDays.includes(day)
+            
+ <div className="lg:col-span-1">
+  <Card className="p-6">
+    <h3 className="font-serif text-2xl font-bold text-gray-900 mb-6 text-center">
+      Event Calendar
+    </h3>
 
-                    return (
-                      <div
-                        key={index}
-                        className={`
-                          text-center py-2 text-sm rounded-lg cursor-pointer transition-colors min-h-[32px] flex items-center justify-center
-                          ${day === null ? "invisible" : ""}
-                          ${isToday ? "border-3 border-green-500 text-white font-bold rounded-lg" : ""}
-                          ${hasEvent ? " bg-primary text-white font-bold hover:bg-primary/90" : "hover:bg-gray-100"}
-                        `}
-                      >
-                        {day}
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="mt-4 text-center">
-                  <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-primary rounded-full"></div>
-                      <span>Event Days</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-lg"></div>
-                      <span>Today</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+    {/* Month Navigation Row */}
+    <div className="flex items-center justify-between mb-4">
+      <button
+        onClick={() =>
+          calendarMonth === 0
+            ? (setCalendarMonth(11), setCalendarYear((y) => y - 1))
+            : setCalendarMonth((m) => m - 1)
+        }
+        className="px-2 py-1 rounded hover:bg-gray-100"
+      >
+        ◀
+      </button>
+
+      <div className="text-sm font-semibold text-gray-700">
+        {monthName} {displayYear}
+      </div>
+
+      <button
+        onClick={() =>
+          calendarMonth === 11
+            ? (setCalendarMonth(0), setCalendarYear((y) => y + 1))
+            : setCalendarMonth((m) => m + 1)
+        }
+        className="px-2 py-1 rounded hover:bg-gray-100"
+      >
+        ▶
+      </button>
+    </div>
+
+    {/* Year Selector */}
+    <div className="flex justify-center mb-4">
+      <select
+        value={calendarYear}
+        onChange={(e) => setCalendarYear(Number(e.target.value))}
+        className="border rounded px-2 py-1 text-sm"
+      >
+        {Array.from({ length: 6 }).map((_, i) => {
+          const year = new Date().getFullYear() - 2 + i;
+          return <option key={year} value={year}>{year}</option>;
+        })}
+      </select>
+    </div>
+
+    {/* Weekdays Header */}
+    <div className="grid grid-cols-7 gap-2 mb-4">
+      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+        <div key={day} className="text-center text-sm font-semibold text-gray-600">
+          {day}
+        </div>
+      ))}
+    </div>
+
+    {/* Animated Days Grid */}
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={`${calendarMonth}-${calendarYear}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.25 }}
+        className="grid grid-cols-7 gap-2"
+      >
+        {calendarDays.map((day, i) => {
+          const isToday =
+            day &&
+            today.getDate() === day &&
+            today.getMonth() === displayMonth &&
+            today.getFullYear() === displayYear;
+
+          const hasEvent = day && eventDays.includes(day);
+
+          const isMultiDay =
+            day &&
+            events.some((e) => {
+              const start = new Date(e.startDate);
+              const end = new Date(e.endDate);
+              if (start.toDateString() === end.toDateString()) return false;
+              const current = new Date(displayYear, displayMonth, day);
+              return current >= start && current <= end;
+            });
+
+          return (
+            <div
+              key={i}
+              className={`
+                relative text-center py-2 text-sm rounded-lg min-h-[32px] transition-colors
+                ${day === null ? "invisible" : ""}
+                ${isToday ? "border-2 border-green-500 font-bold" : ""}
+                ${hasEvent && !isMultiDay ? "bg-primary text-white" : ""}
+                ${isMultiDay ? "bg-orange-400 text-white" : ""}
+                ${!hasEvent && !isMultiDay && day !== null ? "hover:bg-gray-100 cursor-pointer" : ""}
+              `}
+            >
+              {day}
+              {/* Optional Indicator for background multi-day logic */}
+              {isMultiDay && !hasEvent && (
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
+              )}
             </div>
+          );
+        })}
+      </motion.div>
+    </AnimatePresence>
 
+    {/* Color Legend */}
+    <div className="mt-6 pt-4 border-t border-gray-100 flex justify-center gap-4 text-[10px] uppercase tracking-wider font-bold text-gray-500">
+      <div className="flex items-center gap-1">
+        <div className="w-2 h-2 rounded-full bg-primary" /> Single Event
+      </div>
+      <div className="flex items-center gap-1">
+        <div className="w-2 h-2 rounded-full bg-orange-400" /> Retreat/Fest
+      </div>
+    </div>
+  </Card>
+</div>
             {/* Events List */}
             <div className="lg:col-span-2">
               <div className="flex justify-between items-center mb-8">
@@ -173,7 +278,9 @@ export default function EventsPage() {
 
               <div className="space-y-6">
                 {filteredEvents.map((event) => (
-                  <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <Card key={event.id} ref={(el) => {
+    eventRefs.current[event.date] = el
+  }} className="p-6 hover:shadow-lg transition-shadow">
                     <CardContent className="p-0">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-6 flex-1">

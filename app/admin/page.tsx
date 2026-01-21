@@ -21,83 +21,83 @@ import {
   Settings,
 } from "lucide-react"
 
-const mockPendingUsers = [
-  {
-    id: "1",
-    name: "Rahul Kumar",
-    email: "rahul.kumar@email.com",
-    department: "CSE",
-    series: "2020",
-    role: "member",
-    photo: "/kapil.jpg",
-    createdAt: "2024-08-15",
-    isApproved: false,
-  },
-  {
-    id: "2",
-    name: "Priya Sharma",
-    email: "priya.sharma@email.com",
-    department: "EEE",
-    series: "2019",
-    role: "member",
-    photo: "/kapil.jpg",
-    createdAt: "2024-08-14",
-    isApproved: false,
-  },
-  {
-    id: "3",
-    name: "Amit Patel",
-    email: "amit.patel@email.com",
-    department: "ME",
-    series: "2021",
-    role: "member",
-    photo: "/kapil.jpg",
-    createdAt: "2024-08-13",
-    isApproved: true,
-  },
-]
+// const mockPendingUsers = [
+//   {
+//     id: "1",
+//     name: "Rahul Kumar",
+//     email: "rahul.kumar@email.com",
+//     department: "CSE",
+//     series: "2020",
+//     role: "member",
+//     photo: "/kapil.jpg",
+//     createdAt: "2024-08-15",
+//     isApproved: false,
+//   },
+//   {
+//     id: "2",
+//     name: "Priya Sharma",
+//     email: "priya.sharma@email.com",
+//     department: "EEE",
+//     series: "2019",
+//     role: "member",
+//     photo: "/kapil.jpg",
+//     createdAt: "2024-08-14",
+//     isApproved: false,
+//   },
+//   {
+//     id: "3",
+//     name: "Amit Patel",
+//     email: "amit.patel@email.com",
+//     department: "ME",
+//     series: "2021",
+//     role: "member",
+//     photo: "/kapil.jpg",
+//     createdAt: "2024-08-13",
+//     isApproved: true,
+//   },
+// ]
 
-const mockPendingPosts = [
-  {
-    id: "1",
-    title: "Temple Festival Celebration",
-    type: "image",
-    content: "/buddhist-prayer-flags-mountain-peaceful.png",
-    author: "Sita Devi",
-    authorEmail: "sita.devi@email.com",
-    description: "Beautiful moments from our recent temple festival celebration with community participation.",
-    createdAt: "2024-08-16",
-    status: "pending",
-  },
-  {
-    id: "2",
-    title: "Morning Prayer Session",
-    type: "video",
-    content: "/buddha-meditation.png",
-    author: "Ram Krishna",
-    authorEmail: "ram.krishna@email.com",
-    description: "Peaceful morning prayer session in the main temple hall.",
-    createdAt: "2024-08-15",
-    status: "success",
-  },
-  {
-    id: "3",
-    title: "Meditation Workshop",
-    type: "image",
-    content: "/buddha-profile-meditation.png",
-    author: "Gita Sharma",
-    authorEmail: "gita.sharma@email.com",
-    description: "Community meditation workshop conducted by our senior teacher.",
-    createdAt: "2024-08-14",
-    status: "pending",
-  },
-]
+// const mockPendingPosts = [
+//   {
+//     id: "1",
+//     title: "Temple Festival Celebration",
+//     type: "image",
+//     content: "/buddhist-prayer-flags-mountain-peaceful.png",
+//     author: "Sita Devi",
+//     authorEmail: "sita.devi@email.com",
+//     description: "Beautiful moments from our recent temple festival celebration with community participation.",
+//     createdAt: "2024-08-16",
+//     status: "pending",
+//   },
+//   {
+//     id: "2",
+//     title: "Morning Prayer Session",
+//     type: "video",
+//     content: "/buddha-meditation.png",
+//     author: "Ram Krishna",
+//     authorEmail: "ram.krishna@email.com",
+//     description: "Peaceful morning prayer session in the main temple hall.",
+//     createdAt: "2024-08-15",
+//     status: "success",
+//   },
+//   {
+//     id: "3",
+//     title: "Meditation Workshop",
+//     type: "image",
+//     content: "/buddha-profile-meditation.png",
+//     author: "Gita Sharma",
+//     authorEmail: "gita.sharma@email.com",
+//     description: "Community meditation workshop conducted by our senior teacher.",
+//     createdAt: "2024-08-14",
+//     status: "pending",
+//   },
+// ]
 
 export default function AdminDashboard() {
   const { user } = useAuth()
   const router = useRouter()
-  const [pendingUsers, setPendingUsers] = useState(mockPendingUsers)
-  const [pendingPosts, setPendingPosts] = useState(mockPendingPosts)
+  const [pendingUsers, setPendingUsers] = useState<any[]>([])
+  const [pendingPosts, setPendingPosts] = useState<any[]>([])
   const [stats, setStats] = useState({
     totalUsers: 156,
     pendingUsers: 3,
@@ -107,48 +107,84 @@ export default function AdminDashboard() {
     activeMembers: 142,
   })
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login")
-      return
-    }
-    if (user.role !== "admin") {
-      router.push("/")
-      return
-    }
-  }, [user, router])
+useEffect(() => {
+  if (!user) return
 
-  const approveUser = (userId: string) => {
-    setPendingUsers((prev) => prev.filter((u) => u.id !== userId))
-    setStats((prev) => ({ ...prev, pendingUsers: prev.pendingUsers - 1, activeMembers: prev.activeMembers + 1 }))
-    // In real app, make API call here
-    console.log("[v0] Approved user:", userId)
-  }
+  fetch("/api/admin/pending-users", {
+    headers: {
+      "x-user-role": user.role,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => setPendingUsers(data))
+}, [user])
 
-  const rejectUser = (userId: string) => {
-    setPendingUsers((prev) => prev.filter((u) => u.id !== userId))
-    setStats((prev) => ({ ...prev, pendingUsers: prev.pendingUsers - 1 }))
-    // In real app, make API call here
-    console.log("[v0] Rejected user:", userId)
-  }
+useEffect(() => {
+  fetch("/api/admin/pending-gallery", {
+    headers: {
+      "x-user-role": user?.role || "",
+    },
+  })
+    .then(res => res.json())
+    .then(setPendingPosts)
+}, [])
 
-  const approvePost = (postId: string) => {
-    setPendingPosts((prev) => prev.filter((p) => p.id !== postId))
-    setStats((prev) => ({ ...prev, pendingPosts: prev.pendingPosts - 1, totalPosts: prev.totalPosts + 1 }))
-    // In real app, make API call here
-    console.log("[v0] Approved post:", postId)
-  }
 
-  const rejectPost = (postId: string) => {
-    setPendingPosts((prev) => prev.filter((p) => p.id !== postId))
-    setStats((prev) => ({ ...prev, pendingPosts: prev.pendingPosts - 1 }))
-    // In real app, make API call here
-    console.log("[v0] Rejected post:", postId)
-  }
+  
+  const approveUser = async (email: string) => {
+  await fetch("/api/admin/approve-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": user?.role ?? "",
+    },
+    body: JSON.stringify({ targetEmail: email }),
+  })
 
-  if (!user || user.role !== "admin") {
-    return null
-  }
+  setPendingUsers((prev) => prev.filter((u) => u.email !== email))
+}
+
+ const rejectUser = async (email: string) => {
+  await fetch("/api/admin/reject-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": user?.role ?? "",
+    },
+    body: JSON.stringify({ targetEmail: email }),
+  })
+
+  setPendingUsers((prev) => prev.filter((u) => u.email !== email))
+}
+
+
+const approvePost = async (rowIndex: number) => {
+  await fetch("/api/admin/approve-gallery", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": user?.role ?? "",
+    },
+    body: JSON.stringify({ rowIndex }),
+  })
+
+  setPendingPosts(prev => prev.filter(p => p.rowIndex !== rowIndex))
+}
+
+
+const rejectPost = async (rowIndex: number) => {
+  await fetch("/api/admin/reject-gallery", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": user?.role ?? "",
+    },
+    body: JSON.stringify({ rowIndex }),
+  })
+
+  setPendingPosts(prev => prev.filter(p => p.rowIndex !== rowIndex))
+}
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -269,7 +305,7 @@ export default function AdminDashboard() {
                             <AvatarFallback>
                               {user.name
                                 .split(" ")
-                                .map((n) => n[0])
+                                .map((n: string) => n[0])
                                 .join("")}
                             </AvatarFallback>
                           </Avatar>
@@ -306,7 +342,7 @@ export default function AdminDashboard() {
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={() => approveUser(user.id)}
+                            onClick={() => approveUser(user.email)}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve

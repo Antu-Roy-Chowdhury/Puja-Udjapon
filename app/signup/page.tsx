@@ -5,19 +5,52 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useAuth } from "@/components/auth-provider"
+// import { uploadToCloudinary } from "@/lib/cloudinaryUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/components/auth-provider"
 
 const departments = ["CSE", "EEE", "ME", "Civil", "Archi", "ETE", "ECE", "IPE", "GCE", "MSE", "CFPE", "BECM", "URP"]
-
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
+async function uploadToCloudinary(file: File) {
+  const signRes = await fetch("/api/cloudinary/sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folder: "temple/profile" }),
+  })
+  if (!signRes.ok) throw new Error("Signature failed")
+
+  const { signature, timestamp, cloudName, apiKey, folder } = await signRes.json()
+
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("api_key", apiKey)
+  formData.append("timestamp", timestamp)
+  formData.append("signature", signature)
+  formData.append("folder", folder)
+
+  const uploadRes = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+    { method: "POST", body: formData }
+  )
+
+  const data = await uploadRes.json()
+
+  if (!uploadRes.ok) {
+    console.error("[v0] Cloudinary error:", data)
+    throw new Error(data.error?.message || "Upload failed")
+  }
+
+  return data.secure_url
+}
+
 export default function SignupPage() {
+  const { signup } = useAuth()
   const [formData, setFormData] = useState({
     name: "",
     series: "",
@@ -29,39 +62,89 @@ export default function SignupPage() {
     photo: null as File | null,
   })
   const [isLoading, setIsLoading] = useState(false)
-  const { signup } = useAuth()
+  
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsLoading(true)
+  console.log("[v0] Signup form submitted:", formData)
 
-    try {
-      const success = await signup(formData)
-      if (success) {
-        toast({
-          title: "Registration successful",
-          description: "Your account has been created and is pending approval.",
-        })
-        router.push("/login")
-      } else {
-        toast({
-          title: "Registration failed",
-          description: "Please try again.",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+  try {
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.password || !formData.department || !formData.series) {
+      console.log("[v0] Validation failed: missing fields")
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Validation error",
+        description: "Please fill in all required fields.",
         variant: "destructive",
       })
-    } finally {
       setIsLoading(false)
+      return
     }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      console.log("[v0] Password too short")
+      toast({
+        title: "Weak password",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
+
+    let photoUrl = null
+
+    if (formData.photo) {
+      try {
+        console.log("[v0] Uploading photo...")
+        photoUrl = await uploadToCloudinary(formData.photo)
+        console.log("[v0] Photo uploaded:", photoUrl)
+      } catch (photoErr: any) {
+        console.error("[v0] Photo upload error:", photoErr)
+        toast({
+          title: "Photo upload failed",
+          description: photoErr.message || "Failed to upload photo. You can continue without it.",
+          variant: "destructive",
+        })
+        // Continue without photo
+      }
+    }
+
+    console.log("[v0] Calling signup API...")
+    const ok = await signup({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      department: formData.department,
+      series: formData.series,
+      photo: photoUrl,
+    })
+
+    console.log("[v0] Signup response:", ok)
+
+    toast({
+      title: "Account created successfully",
+      description: "Your account is pending admin approval. You'll be notified once approved.",
+    })
+
+    router.push("/login")
+  } catch (err: any) {
+    console.error("[v0] Signup error:", err)
+    toast({
+      title: "Signup failed",
+      description: err.message || "Something went wrong. Please try again.",
+      variant: "destructive",
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -102,7 +185,13 @@ export default function SignupPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="series">Series (Year)</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, series: value })}>
+                <Select
+  value={formData.series}
+  onValueChange={(value) =>
+    setFormData({ ...formData, series: value })
+  }
+>
+
                   <SelectTrigger>
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>

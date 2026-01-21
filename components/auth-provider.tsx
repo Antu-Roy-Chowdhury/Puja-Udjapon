@@ -8,7 +8,7 @@ interface User {
   id: string
   name: string
   email: string
-  role: "admin" | "member"
+  role: "admin" | "member" | "super_admin"
   isApproved: boolean
   department?: string
   series?: string
@@ -19,7 +19,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
+  login: (email: string, password: string) => Promise<"OK" | "PENDING" | "INVALID" | { error: string; status: string }>
   logout: () => void
   signup: (userData: any) => Promise<boolean>
   isLoading: boolean
@@ -34,73 +34,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for stored auth token on mount
     const token = localStorage.getItem("auth-token")
-    if (token) {
-      // In a real app, validate token with API
-      // For now, mock user data
-      setUser({
-        id: "1",
-        name: "Antu Roy Chowdhury",
-        email: "anturoychowdhury3@gmail.com",
-        role: "admin",
-        department: "ETE",
-        series: "2020",
-        bloodGroup: "B+",
-        contact: "01700000000",
-        isApproved: true,
-        photo: "https://github.com/Antu-Roy-Chowdhury/Puja-Udjapon/blob/main/public/dev.jpg"
-      })
+    const userDataStr = localStorage.getItem("user-data")
+    
+    if (token && userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr)
+        setUser(userData)
+      } catch (e) {
+        console.error("[v0] Failed to parse stored user data:", e)
+        localStorage.removeItem("auth-token")
+        localStorage.removeItem("user-data")
+      }
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // Mock API call - replace with real API
-      if (email === "admin@temple.com" && password === "admin") {
-        const adminUser = {
-          id: "1",
-          name: "Antu Roy Chowdhury",
-          email: "admin@temple.com",
-          role: "admin" as const,
-          isApproved: true,
-        }
-        setUser(adminUser)
-        localStorage.setItem("auth-token", "mock-admin-token")
-        return true
-      } else if (email === "member@temple.com" && password === "member") {
-        const memberUser = {
-          id: "2",
-          name: "Member User",
-          email: "member@temple.com",
-          role: "member" as const,
-          isApproved: true,
-        }
-        setUser(memberUser)
-        localStorage.setItem("auth-token", "mock-member-token")
-        return true
-      }
-      return false
-    } catch (error) {
-      return false
+const login = async (email: string, password: string): Promise<"OK" | "PENDING" | "INVALID" | { error: string; status: string }> => {
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
+
+    const data = await res.json()
+
+    if (data.status === "PENDING") {
+      return { status: "PENDING", error: data.error || "Account pending approval" }
     }
+
+    if (data.status !== "OK") {
+      return { status: "INVALID", error: data.error || "Invalid email or password" }
+    }
+
+    if (data.user) {
+      setUser(data.user)
+      localStorage.setItem("auth-token", email)
+      localStorage.setItem("user-data", JSON.stringify(data.user))
+    }
+    return "OK"
+  } catch (error) {
+    console.error("[v0] Login error:", error)
+    return { status: "INVALID", error: error instanceof Error ? error.message : "An error occurred" }
   }
+}
+
+
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem("auth-token")
+    localStorage.removeItem("user-data")
   }
+  const signup = async (payload: {
+  name: string
+  email: string
+  password: string
+  department: string
+  series: string
+  photo: string | null
+}) => {
+  try {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
 
-  const signup = async (userData: any): Promise<boolean> => {
-    try {
-      // Mock API call - replace with real API
-      console.log("Signup data:", userData)
-      return true
-    } catch (error) {
-      return false
+    const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(data.error || "Signup failed")
     }
-  }
 
-  return <AuthContext.Provider value={{ user, login, logout, signup, isLoading }}>{children}</AuthContext.Provider>
+    return true
+  } catch (error) {
+    console.error("[v0] Signup error:", error)
+    throw error
+  }
+}
+
+
+
+
+  return <AuthContext.Provider value={{ user, login, logout, signup,  isLoading }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

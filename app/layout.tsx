@@ -3,10 +3,10 @@ import type { Metadata } from "next"
 import { Playfair_Display, Open_Sans } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/components/auth-provider"
-import { Toaster } from "@/components/ui/toaster"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Image from "next/image"
+import { Toaster } from "sonner"
 
 const playfair = Playfair_Display({
   subsets: ["latin"],

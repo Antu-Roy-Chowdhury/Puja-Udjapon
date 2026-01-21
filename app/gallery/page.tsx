@@ -1,5 +1,6 @@
 "use client"
 
+import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +10,35 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Upload, Search, Play, ImageIcon, Calendar, User } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
+import { toast } from "sonner"
+
+async function uploadToCloudinary(file: File, type: "image" | "video") {
+  const res = await fetch("/api/cloudinary/sign")
+  const { signature, timestamp, cloudName, apiKey } = await res.json()
+
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("api_key", apiKey)
+  formData.append("timestamp", timestamp)
+  formData.append("signature", signature)
+
+  const endpoint =
+    type === "video"
+      ? "video/upload"
+      : "image/upload"
+
+  const uploadRes = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/${endpoint}`,
+    { method: "POST", body: formData }
+  )
+
+  const data = await uploadRes.json()
+  return data.secure_url
+}
+
+
+
+
 
 interface GalleryItem {
   id: string
@@ -24,6 +54,7 @@ interface GalleryItem {
 }
 
 export default function GalleryPage() {
+  const { toast } = useToast()
   const { user } = useAuth()
   const [items, setItems] = useState<GalleryItem[]>([])
   const [filteredItems, setFilteredItems] = useState<GalleryItem[]>([])
@@ -33,85 +64,81 @@ export default function GalleryPage() {
   const [sortBy, setSortBy] = useState<"date" | "user" | "title">("date")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [uploadData, setUploadData] = useState({
+    file: null as File | null,
+    title: "",
+    description: "",
+    tags: "",
+    type: "image" as "image" | "video",
+  })
+  const [uploading, setUploading] = useState(false)
+
+  const handleGalleryUpload = async () => {
+    if (!uploadData.file || !uploadData.title) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUploading(true)
+    try {
+      const url = await uploadToCloudinary(uploadData.file, uploadData.type)
+
+      const res = await fetch("/api/gallery/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: uploadData.title,
+          type: uploadData.type,
+          url,
+          thumbnail: uploadData.type === "video" ? url : undefined,
+          uploadedBy: user?.email,
+          description: uploadData.description,
+          tags: uploadData.tags ? uploadData.tags.split(",").map(t => t.trim()) : [],
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Upload failed")
+      }
+
+      toast({
+        title: "Upload submitted",
+        description: "Your content is pending admin approval.",
+      })
+
+      setUploadOpen(false)
+      setUploadData({ file: null, title: "", description: "", tags: "", type: "image" })
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // Mock data - replace with API call
+useEffect(() => {
+  setLoading(true)
+  fetch("/api/gallery")
+    .then(res => res.json())
+    .then(setItems)
+    .finally(() => setLoading(false))
+}, [])
   useEffect(() => {
-    const mockItems: GalleryItem[] = [
-      {
-        id: "1",
-        title: "19 Day Celebration 2024",
-        type: "image",
-        url: "/Gallery/9.jpg",
-        uploadedBy: "Kapil Deb",
-        uploadedAt: "2024-05-15",
-        approved: true,
-        description: "Beautiful celebration of 19 Farewell Day with community gathering",
-        tags: ["celebration", "19", "community"],
-      },
-      {
-        id: "2",
-        title: "Friendly Moments",
-        type: "video",
-        url: "/meditation-video.mp4",
-        thumbnail: "/Gallery/10.jpg",
-        uploadedBy: "Ayon Ganguly",
-        uploadedAt: "2024-05-10",
-        approved: true,
-        description: "Guided morning meditation in the temple garden",
-        tags: ["19", "morning", "guidance"],
-      },
-      {
-        id: "3",
-        title: "Temple Architecture",
-        type: "image",
-        url: "/Gallery/8.jpg",
-        uploadedBy: "Kapil Deb",
-        uploadedAt: "2024-05-08",
-        approved: true,
-        description: "Beautiful traditional temple doors and architecture",
-        tags: ["architecture", "temple", "traditional"],
-      },
-      {
-        id: "4",
-        title: "Dharma Teaching Session",
-        type: "video",
-        url: "/dharma-teaching.mp4",
-        thumbnail: "/Gallery/12.jpg",
-        uploadedBy: "Kapil Deb",
-        uploadedAt: "2024-05-05",
-        approved: true,
-        description: "Weekly dharma teaching on compassion and mindfulness",
-        tags: ["dharma", "teaching", "wisdom"],
-      },
-      {
-        id: "5",
-        title: "Community Gathering",
-        type: "image",
-        url: "/Gallery/13.jpg",
-        uploadedBy: "Ayon",
-        uploadedAt: "2024-05-01",
-        approved: true,
-        description: "Monthly community gathering and shared meal",
-        tags: ["community", "gathering", "ceremony"],
-      },
-      {
-        id: "6",
-        title: "Temple",
-        type: "image",
-        url: "/Gallery/7.jpg",
-        uploadedBy: "Ayon",
-        uploadedAt: "2024-04-30",
-        approved: true,
-        description: "Beautiful traditional temple doors and architecture",
-        tags: ["architecture", "temple", "traditional"],
-      },
+  fetch("/api/gallery/list")
+    .then(res => res.json())
+    .then(setItems)
+}, [])
 
-    ]
-
-    setItems(mockItems)
-    setFilteredItems(mockItems)
-    setLoading(false)
-  }, [])
 
   // Filter and sort items
   useEffect(() => {
@@ -220,10 +247,68 @@ export default function GalleryPage() {
 
           {user && (
             <div className="flex justify-end">
-              <Button className="bg-orange-500 hover:bg-orange-600">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Content
-              </Button>
+              <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-orange-500 hover:bg-orange-600">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Content
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Upload to Gallery</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Type</label>
+                      <Select value={uploadData.type} onValueChange={(value) => setUploadData({ ...uploadData, type: value as "image" | "video" })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="image">Image</SelectItem>
+                          <SelectItem value="video">Video</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">File *</label>
+                      <Input
+                        type="file"
+                        accept={uploadData.type === "video" ? "video/*" : "image/*"}
+                        onChange={(e) => setUploadData({ ...uploadData, file: e.target.files?.[0] || null })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Title *</label>
+                      <Input
+                        value={uploadData.title}
+                        onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
+                        placeholder="Enter title"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Description</label>
+                      <Input
+                        value={uploadData.description}
+                        onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
+                        placeholder="Enter description"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Tags (comma-separated)</label>
+                      <Input
+                        value={uploadData.tags}
+                        onChange={(e) => setUploadData({ ...uploadData, tags: e.target.value })}
+                        placeholder="e.g. festival, ceremony, event"
+                      />
+                    </div>
+                    <Button onClick={handleGalleryUpload} disabled={uploading} className="w-full bg-orange-500 hover:bg-orange-600">
+                      {uploading ? "Uploading..." : "Submit for Approval"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </div>

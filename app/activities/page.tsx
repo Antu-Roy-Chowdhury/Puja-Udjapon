@@ -1,77 +1,20 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import Image from "next/image"
 
-const activities = [
-  {
-    id: 1,
-    name: "Light Meditation",
-    image: "/buddhist-meditation-cave-peaceful.png",
-    description:
-      "Experience inner peace through guided light meditation sessions. Our experienced teachers will guide you through ancient meditation techniques that help calm the mind and illuminate the path to enlightenment.",
-    schedule: "Daily at 6:00 AM and 7:00 PM",
-    duration: "45 minutes",
-    level: "All levels welcome",
-  },
-  {
-    id: 2,
-    name: "Weekly Prayers",
-    image: "/buddhist-monks-ceremony.png",
-    description:
-      "Join us for special ceremonial events throughout the year, including krisna's Birthday, Vesak Day, and other significant celebrations. These events bring our community together in prayer and celebration.",
-    schedule: "Monthly special occasions",
-    duration: "2-3 hours",
-    level: "Open to all",
-  },
-  {
-    id: 3,
-    name: "Special Events",
-    image: "/buddhist-festival.png",
-    description:
-      "Celebrate the festival of colors with our community. This joyous occasion combines traditional Holi celebrations with teachings about joy, compassion, and unity.",
-    schedule: "Annual celebration in March",
-    duration: "Full day event",
-    level: "Family friendly",
-  },
-  {
-    id: 4,
-    name: "Ongoing Programs",
-    image: "/buddhist-temple-doors.png",
-    description:
-      "Participate in our continuous learning programs including weekly dharma discussions, community service projects, and spiritual development workshops designed for long-term growth.",
-    schedule: "Weekly sessions",
-    duration: "1-2 hours",
-    level: "Progressive levels",
-  },
-  {
-    id: 5,
-    name: "Holi Festival",
-    image: "/buddhist-prayer-flags-mountain-peaceful.png",
-    description:
-      "Comprehensive courses covering philosophy, meditation techniques, and practical applications of teachings in daily life. Perfect for beginners and advanced practitioners.",
-    schedule: "Monthly course starts",
-    duration: "8-week programs",
-    level: "Beginner to advanced",
-  },
-  {
-    id: 6,
-    name: "Dharma Study",
-    image: "/buddha-meditation.png",
-    description:
-      "Deep dive into scriptures and teachings through guided study sessions. Explore the Four Noble Truths, Eightfold Path, and other fundamental concepts.",
-    schedule: "Twice weekly",
-    duration: "90 minutes",
-    level: "Intermediate",
-  },
-]
+import { useEffect, useState } from "react"
+import { getActivities } from "@/lib/getActivities"
 
 export default function ActivitiesPage() {
-  const [selectedActivity, setSelectedActivity] = useState(null)
+  const [activities, setActivities] = useState<any[]>([])
+
+  useEffect(() => {
+    getActivities().then(setActivities)
+  }, [])
 
   return (
     <div className="min-h-screen">
@@ -98,11 +41,14 @@ export default function ActivitiesPage() {
                     <Card className="overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                       <div className="relative h-64">
                         <Image
-                          src={activity.image || "/placeholder.svg"}
-                          alt={activity.name}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
+                        src={activity.image || "/placeholder.svg"}
+                        alt={activity.name}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg"
+                        }}
+                      />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <div className="absolute bottom-4 left-4 right-4">
                           <h3 className="font-serif text-xl font-bold text-white mb-2">{activity.name}</h3>

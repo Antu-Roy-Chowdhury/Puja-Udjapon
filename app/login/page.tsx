@@ -33,41 +33,68 @@ export default function LoginPage() {
     },
   })
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true)
+const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  setIsLoading(true)
+  console.log("[v0] Login form submitted with email:", values.email)
 
-    try {
-      const success = await login(values.email, values.password)
-      if (success) {
-        toast({
-          title: "Login successful",
-          description: "Welcome back!",
-        })
-        router.push("/") // Redirect to homepage on success
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+  try {
+    const result = await login(values.email, values.password)
+    console.log("[v0] Login result:", result)
+
+    if (result === "OK") {
+      console.log("[v0] Login successful, redirecting to profile")
       toast({
-        title: "An Error Occurred",
-        description: "Something went wrong. Please try again.",
+        title: "Login successful",
+        description: "Welcome back! Redirecting to your profile...",
+      })
+      router.push("/profile")
+      return
+    }
+
+    if (typeof result === "object" && result.status === "PENDING") {
+      console.log("[v0] Account pending approval")
+      toast({
+        title: "Account Pending",
+        description: result.error,
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
+      return
     }
+
+    if (typeof result === "object" && result.status === "INVALID") {
+      console.log("[v0] Login failed:", result.error)
+      toast({
+        title: "Login Failed",
+        description: result.error,
+        variant: "destructive",
+      })
+      return
+    }
+
+    toast({
+      title: "Login Failed",
+      description: "An unexpected error occurred.",
+      variant: "destructive",
+    })
+  } catch (error) {
+    console.error("[v0] Login submit error:", error)
+    toast({
+      title: "Error",
+      description: "Something went wrong. Please try again.",
+      variant: "destructive",
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-serif text-3xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your Buddha Temple account</CardDescription>
+          <CardDescription>Sign in to your RUET Puja Udjapon account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
