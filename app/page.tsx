@@ -133,7 +133,7 @@ export default function HomePage() {
                 </div>
                 <div className="space-y-4 pt-8">
                   <Image
-                    src="https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-festival_sdw7pq.jpg"
+                    src="https://res.cloudinary.com/djt70cy8p/image/upload/v1769127833/IMG_0834_azjooq.jpg"
                     alt="durga ma"
                     width={250}
                     height={250}
@@ -174,7 +174,21 @@ export default function HomePage() {
 
         <Carousel  opts={{ loop: true}}>
           <CarouselContent>
-            {["https://res.cloudinary.com/djt70cy8p/image/upload/v1768999799/library_epfqi4.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999780/buddhist-prayer-flags-mountain-peaceful_dngprz.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999710/6_n0ok2t.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999688/7_tzvnuj.jpg", "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999697/5_tgk5ow.jpg"].map((src, i) => (
+            {[
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127882/1_hcq3m4.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127854/8_dyfwjg.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127870/4_svqahy.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127857/7_nhhkve.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127891/1_fbpxwh.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127805/2025_08_16_19_18_IMG_0272_iki6nz.heic",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127799/2025_08_16_18_58_IMG_0148_vctsbm.heic",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127784/2025_08_16_20_05_IMG_0358_oxmbmx.heic",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127779/IMG_5133_suicct.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127739/IMG_0305_dl0urq.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127715/IMG_0257_prixc4.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127699/IMG_3470_o5sx0o.jpg",
+  "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127681/IMG_2878_x1v18w.jpg"
+].map((src, i) => (
               <CarouselItem key={i} >
                 <Image
                   src={src}

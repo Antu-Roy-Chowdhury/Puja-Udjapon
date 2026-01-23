@@ -39,18 +39,30 @@ export default function EventsPage() {
         if (data.events) {
           // Transform Supabase events to match expected format
           const transformedEvents = data.events.map((event: any) => ({
+                      id: event.id,
+                      title: event.title,
+                      description: event.description,
+                      start_date: event.start_time,
+                      end_date: event.end_date,
+                      location: event.location,
+                      image_url: event.image_url,
+                      date: event.start_time, // For compatibility
+                    }))
+                    setEvents(transformedEvents)
+                    console.log("[v0] Events fetched:", transformedEvents)
+                  }
+                  const transformedEvents = data.events.map((event: any) => ({
             id: event.id,
-            title: event.title,
+            title: event.title, // Database field is 'title'
             description: event.description,
-            start_date: event.start_date,
-            end_date: event.end_date,
+            date: event.start_time, // Map 'start_time' to 'date' for the calendar
+            startDate: event.start_time,
+            endDate: event.end_time || event.start_time,
             location: event.location,
-            image_url: event.image_url,
-            date: event.start_date, // For compatibility
+            // Add these if you want to avoid 'undefined' in the UI
+            time: new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            month: new Date(event.start_time).toLocaleString("en-US", { month: "long" }) 
           }))
-          setEvents(transformedEvents)
-          console.log("[v0] Events fetched:", transformedEvents)
-        }
       } catch (error) {
         console.error("[v0] Failed to fetch events:", error)
       }
@@ -298,48 +310,43 @@ const calendarDays: (number | null)[] = []
 
               <div className="space-y-6">
                 {filteredEvents.map((event) => (
-                  <Card key={event.id} ref={(el) => {
-    eventRefs.current[event.date] = el
-  }} className="p-6 hover:shadow-lg transition-shadow">
-                    <CardContent className="p-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-6 flex-1">
-                          <div className="text-center flex-shrink-0">
-                            <div className="text-3xl font-bold text-gray-900">{new Date(event.date).getDate()}</div>
-                            <div className="text-sm text-primary font-semibold uppercase">
-                              {new Date(event.date).toLocaleDateString("en-US", { month: "short" })}
-                            </div>
-                          </div>
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Calendar className="w-6 h-6 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-xl text-gray-900 mb-1">{event.name}</h3>
-                            {event.subtitle && <p className="text-gray-600 mb-2">{event.subtitle}</p>}
-                            <p className="text-gray-600 mb-3 leading-relaxed">{event.description}</p>
-                            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                              <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {event.time}
-                              </div>
-                              <div className="flex items-center">
-                                <MapPin className="w-4 h-4 mr-1" />
-                                {event.location}
-                              </div>
-                              <div className="flex items-center">
-                                <Users className="w-4 h-4 mr-1" />
-                                {event.registered}/{event.capacity} registered
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col space-y-2 ml-4">
-                          <Button className="bg-primary hover:bg-primary/90">Register Now</Button>
-                          <Button variant="outline" size="sm">View Details</Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+<Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">
+    <CardContent className="p-0">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start space-x-6 flex-1">
+          {/* Date Box */}
+          <div className="text-center flex-shrink-0">
+            <div className="text-3xl font-bold text-gray-900">
+              {new Date(event.date).getDate()}
+            </div>
+            <div className="text-sm text-primary font-semibold uppercase">
+              {new Date(event.date).toLocaleDateString("en-US", { month: "short" })}
+            </div>
+          </div>
+
+          <div className="flex-1">
+            {/* CHANGE: event.name -> event.title */}
+            <h3 className="font-semibold text-xl text-gray-900 mb-1">{event.title}</h3>
+            
+            <p className="text-gray-600 mb-3 leading-relaxed">{event.description}</p>
+            
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 mr-1" />
+                {/* CHANGE: Added formatted time */}
+                {event.time}
+              </div>
+              <div className="flex items-center">
+                <MapPin className="w-4 h-4 mr-1" />
+                {event.location}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Buttons... */}
+      </div>
+    </CardContent>
+  </Card>
                 ))}
               </div>
 

@@ -11,7 +11,7 @@ export async function GET() {
     // Fetch all events (unapproved for admins, approved for public)
     const { data, error } = await supabase
       .from("events")
-      .select("*")
+      .select("id, title, description, start_time, end_time, location, approved")
       .order("start_time", { ascending: true })
 
     if (error) throw error
@@ -19,7 +19,7 @@ export async function GET() {
     // Transform data to match expected format
     const events = data?.map((event: any) => ({
       ...event,
-      start_date: event.start_time,
+      start_time: event.start_time,
       end_date: event.end_time,
     })) || []
 

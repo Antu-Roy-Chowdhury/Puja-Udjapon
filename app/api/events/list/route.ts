@@ -13,12 +13,12 @@ export async function GET() {
       .from("events")
       .select("*")
       .eq("approved", true)
-      .order("start_date", { ascending: true })
+      .order("start_time", { ascending: true })
 
     if (error) throw error
 
     console.log("[v0] Fetched events:", data)
-    return NextResponse.json({ events: data })
+    return NextResponse.json({ events: data || [] })
   } catch (error) {
     console.error("[v0] Get events error:", error)
     return NextResponse.json(
