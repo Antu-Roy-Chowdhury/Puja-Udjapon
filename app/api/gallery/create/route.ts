@@ -19,6 +19,12 @@ export async function POST(req: Request) {
       tags = [],
     } = body
 
+    if (!url) {
+      return NextResponse.json(
+        { error: "URL is required from Cloudinary" },
+        { status: 400 }
+      )
+    }
     // Get user ID from uploaded_by (email)
     const { data: profile } = await supabase
       .from("profiles")

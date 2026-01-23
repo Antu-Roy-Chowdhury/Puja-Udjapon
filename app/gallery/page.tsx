@@ -1,6 +1,5 @@
 "use client"
 
-import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Upload, Search, Play, ImageIcon, Calendar, User } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
-import { toast } from "sonner"
+import { useToast } from "@/hooks/use-toast"
 
 async function uploadToCloudinary(file: File, type: "image" | "video") {
   const res = await fetch("/api/cloudinary/sign")
@@ -35,10 +34,6 @@ async function uploadToCloudinary(file: File, type: "image" | "video") {
   const data = await uploadRes.json()
   return data.secure_url
 }
-
-
-
-
 
 interface GalleryItem {
   id: string
@@ -125,20 +120,32 @@ export default function GalleryPage() {
     }
   }
 
-  // Mock data - replace with API call
-useEffect(() => {
-  setLoading(true)
-  fetch("/api/gallery")
-    .then(res => res.json())
-    .then(setItems)
-    .finally(() => setLoading(false))
-}, [])
+  // Fetch gallery items from Supabase
   useEffect(() => {
-  fetch("/api/gallery/list")
-    .then(res => res.json())
-    .then(setItems)
-}, [])
-
+    setLoading(true)
+    fetch("/api/gallery/list")
+      .then(res => res.json())
+      .then((data) => {
+        // Transform data to match GalleryItem interface
+        const items = Array.isArray(data) ? data : (data.gallery || []);
+        
+        setItems(items.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          url: item.url,
+          thumbnail: item.thumbnail,
+          // Use the mapped names from your API transformation
+          uploadedBy: item.uploadedBy || "Unknown", 
+          uploadedAt: item.uploadedAt,
+          approved: true, // They are already filtered by the API
+          description: item.description,
+          tags: item.tags || [],
+        })))
+      })
+      .catch(error => console.error("[v0] Gallery fetch error:", error))
+      .finally(() => setLoading(false))
+  }, [])
 
   // Filter and sort items
   useEffect(() => {

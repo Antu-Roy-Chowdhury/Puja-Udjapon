@@ -19,6 +19,7 @@ import {
   XCircle,
   Eye,
   Settings,
+  DollarSign,
 } from "lucide-react"
 
 // const mockPendingUsers = [
@@ -98,6 +99,11 @@ export default function AdminDashboard() {
   const router = useRouter()
   const [pendingUsers, setPendingUsers] = useState<any[]>([])
   const [pendingPosts, setPendingPosts] = useState<any[]>([])
+  const [donationStats, setDonationStats] = useState({
+    totalDonations: 0,
+    totalAmount: 0,
+    averageDonation: 0,
+  })
   const [stats, setStats] = useState({
     totalUsers: 156,
     pendingUsers: 3,
@@ -127,6 +133,19 @@ useEffect(() => {
   })
     .then(res => res.json())
     .then(setPendingPosts)
+}, [])
+
+useEffect(() => {
+  fetch("/api/donation/stats")
+    .then(res => res.json())
+    .then((data) => {
+      setDonationStats({
+        totalDonations: data.totalDonations || 0,
+        totalAmount: data.totalAmount || 0,
+        averageDonation: data.averageDonation || 0,
+      })
+    })
+    .catch(error => console.error("[v0] Failed to fetch donation stats:", error))
 }, [])
 
 
@@ -264,6 +283,18 @@ const rejectPost = async (rowIndex: number) => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Events</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.totalEvents}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <DollarSign className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Donations</p>
+                  <p className="text-2xl font-bold text-gray-900">₹{donationStats.totalAmount?.toFixed(0) || 0}</p>
                 </div>
               </div>
             </CardContent>

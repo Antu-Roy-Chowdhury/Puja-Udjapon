@@ -8,23 +8,17 @@ const supabase = createClient(
 
 export async function GET() {
   try {
-    // Fetch all events (unapproved for admins, approved for public)
+    // Fetch approved events, ordered by start date
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .order("start_time", { ascending: true })
+      .eq("approved", true)
+      .order("start_date", { ascending: true })
 
     if (error) throw error
 
-    // Transform data to match expected format
-    const events = data?.map((event: any) => ({
-      ...event,
-      start_date: event.start_time,
-      end_date: event.end_time,
-    })) || []
-
-    console.log("[v0] Fetched events:", events)
-    return NextResponse.json({ events })
+    console.log("[v0] Fetched events:", data)
+    return NextResponse.json({ events: data })
   } catch (error) {
     console.error("[v0] Get events error:", error)
     return NextResponse.json(

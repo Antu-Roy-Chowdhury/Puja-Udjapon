@@ -90,7 +90,19 @@ const login = async (email: string, password: string): Promise<"OK" | "PENDING" 
   name: string
   email: string
   password: string
-  department: string
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Signup for an account
+ * @param {Object} payload - Signup payload
+ * @param {string} payload.name - Full name
+ * @param {string} payload.email - Email address
+ * @param {string} payload.password - Password
+ * @param {string} payload.department - Department
+ * @param {string} payload.series - Series
+ * @param {string|null} payload.photo - Profile photo
+ * @returns {Promise<boolean>} True if signup successful, false otherwise
+ */
+/*******  797c54ad-45e8-4883-a610-493dec3e9533  *******/  department: string
   series: string
   photo: string | null
 }) => {

@@ -29,13 +29,33 @@ export default function EventsPage() {
   const [calendarYear, setCalendarYear] = useState(today.getFullYear())
 
   // =========================
-  // FETCH EVENTS (Google Calendar)
+  // FETCH EVENTS (Supabase)
   // =========================
   useEffect(() => {
-    fetch("/api/events")
-      .then(res => res.json())
-      .then(setEvents)
-      .catch(console.error)
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("/api/events/list")
+        const data = await res.json()
+        if (data.events) {
+          // Transform Supabase events to match expected format
+          const transformedEvents = data.events.map((event: any) => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            start_date: event.start_date,
+            end_date: event.end_date,
+            location: event.location,
+            image_url: event.image_url,
+            date: event.start_date, // For compatibility
+          }))
+          setEvents(transformedEvents)
+          console.log("[v0] Events fetched:", transformedEvents)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch events:", error)
+      }
+    }
+    fetchEvents()
   }, [])
 
   // =========================

@@ -1,6 +1,22 @@
 "use client"
 
+import React from "react"
+
 import { useAuth } from "@/components/auth-provider"
+
+// Extend the User type to include 'bio'
+type User = {
+  id: string
+  name: string
+  email: string
+  department?: string
+  series?: string
+  photo?: string
+  contact?: string
+  bloodGroup?: string
+  role: string
+  bio?: string
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,18 +44,20 @@ import {
 } from "lucide-react"
 
 export default function ProfilePage() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading } = useAuth() as { user: User | null, isLoading: boolean }
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [redirected, setRedirected] = useState(false)
   const [defaultTab, setDefaultTab] = useState("profile")
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
     department: "",
     series: "",
+    photo: "",
     contact: "",
     bloodGroup: "",
     bio: "",
@@ -78,9 +96,10 @@ export default function ProfilePage() {
       email: user.email || "",
       department: user.department || "",
       series: user.series || "",
-      contact: "",
-      bloodGroup: "",
-      bio: "",
+      photo: user.photo || "",
+      contact: user.contact || "",
+      bloodGroup: user.bloodGroup || "",
+      bio: user.bio || "",
     })
 
     // Load admin data if user is admin or super_admin
@@ -133,17 +152,79 @@ export default function ProfilePage() {
     }
   }
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingPhoto(true)
+    try {
+      // Get Cloudinary signature
+      const signRes = await fetch("/api/cloudinary/sign")
+      const { signature, timestamp, cloudName, apiKey } = await signRes.json()
+
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("api_key", apiKey)
+      formData.append("timestamp", timestamp)
+      formData.append("signature", signature)
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: formData }
+      )
+
+      const data = await uploadRes.json()
+      if (data.secure_url) {
+        setProfileData({ ...profileData, photo: data.secure_url })
+        toast({
+          title: "Photo updated",
+          description: "Your profile picture has been updated.",
+        })
+      }
+    } catch (error) {
+      console.error("[v0] Photo upload error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
   const handleSave = async () => {
     try {
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          ...profileData,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save profile")
+      }
+
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
       })
       setIsEditing(false)
+      
+      // Update local user data
+      if (data.data) {
+        console.log("[v0] Profile saved:", data.data)
+      }
     } catch (error) {
+      console.error("[v0] Save profile error:", error)
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
         variant: "destructive",
       })
     }
@@ -158,6 +239,7 @@ export default function ProfilePage() {
       contact: "",
       bloodGroup: "",
       bio: "",
+      photo: "",
     })
     setIsEditing(false)
   }
@@ -327,7 +409,7 @@ export default function ProfilePage() {
                   <div className="absolute -bottom-16 left-6">
                     <div className="relative">
                       <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                        <AvatarImage src={user.photo || "/placeholder.svg"} alt={user.name} />
+                        <AvatarImage src={profileData.photo || user.photo || "/placeholder.svg"} alt={user.name} />
                         <AvatarFallback className="text-2xl font-semibold bg-primary text-white">
                           {user.name
                             .split(" ")
@@ -336,12 +418,19 @@ export default function ProfilePage() {
                             .toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
+                      <input
+                        type="file"
+                        id="photo-upload"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        disabled={uploadingPhoto}
+                      />
                       <Button
                         size="sm"
                         className="absolute bottom-2 right-2 rounded-full w-8 h-8 p-0"
-                        onClick={() =>
-                          toast({ title: "Feature coming soon", description: "Photo upload will be available soon." })
-                        }
+                        onClick={() => document.getElementById("photo-upload")?.click()}
+                        disabled={uploadingPhoto}
                       >
                         <Camera className="w-4 h-4" />
                       </Button>

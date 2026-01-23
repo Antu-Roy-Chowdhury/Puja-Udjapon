@@ -6,7 +6,8 @@ import { AuthProvider } from "@/components/auth-provider"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Image from "next/image"
-import { Toaster } from "sonner"
+import { Toaster as SonnerToaster } from "sonner"
+import { Toaster } from "@/components/ui/toaster"
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -39,8 +40,9 @@ export default function RootLayout({
     <html lang="en" className={`${playfair.variable} ${openSans.variable} antialiased`}>
       <body className="font-sans">
         <AuthProvider>
-          <Navigation/>{children}
+          <Navigation />{children}
           <Toaster />
+          <SonnerToaster />
           <Footer />
         </AuthProvider>
       </body>

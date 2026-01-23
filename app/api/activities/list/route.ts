@@ -18,9 +18,9 @@ export async function GET() {
     if (error) throw error
 
     console.log("[v0] Gallery items fetched:", data)
-    return NextResponse.json(data)
+    return NextResponse.json({ gallery: data })
   } catch (error) {
-    console.error("[v0] Gallery error:", error)
+    console.error("[v0] Gallery list error:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch gallery" },
       { status: 500 }

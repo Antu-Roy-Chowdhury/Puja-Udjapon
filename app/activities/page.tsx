@@ -7,13 +7,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Image from "next/image"
 
 import { useEffect, useState } from "react"
-import { getActivities } from "@/lib/getActivities"
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<any[]>([])
 
   useEffect(() => {
-    getActivities().then(setActivities)
+    const fetchActivities = async () => {
+      try {
+        const res = await fetch("/api/activities/list")
+        const data = await res.json()
+        if (data.activities) {
+          console.log("[v0] Activities fetched:", data.activities)
+          setActivities(data.activities)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch activities:", error)
+      }
+    }
+    fetchActivities()
   }, [])
 
   return (
@@ -41,7 +52,7 @@ export default function ActivitiesPage() {
                     <Card className="overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                       <div className="relative h-64">
                         <Image
-                        src={activity.image || "/placeholder.svg"}
+                        src={activity.image_url || "/placeholder.svg"}
                         alt={activity.name}
                         fill
                         className="object-cover"
@@ -66,7 +77,7 @@ export default function ActivitiesPage() {
                     <div className="space-y-4">
                       <div className="relative h-64 rounded-lg overflow-hidden">
                         <Image
-                          src={activity.image || "/placeholder.svg"}
+                          src={activity.image_url || "/placeholder.svg"}
                           alt={activity.name}
                           fill
                           className="object-cover"

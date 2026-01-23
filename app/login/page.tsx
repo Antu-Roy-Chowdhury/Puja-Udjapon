@@ -46,6 +46,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
       toast({
         title: "Login successful",
         description: "Welcome back! Redirecting to your profile...",
+        variant: "success",
       })
       router.push("/profile")
       return
@@ -54,7 +55,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (typeof result === "object" && result.status === "PENDING") {
       console.log("[v0] Account pending approval")
       toast({
-        title: "Account Pending",
+        title: "⏳ Account Pending Review ",
         description: result.error,
         variant: "destructive",
       })
@@ -64,7 +65,7 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (typeof result === "object" && result.status === "INVALID") {
       console.log("[v0] Login failed:", result.error)
       toast({
-        title: "Login Failed",
+        title: "❌ Login Failed",
         description: result.error,
         variant: "destructive",
       })
@@ -72,14 +73,14 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
     }
 
     toast({
-      title: "Login Failed",
+      title: "❌ Login Failed",
       description: "An unexpected error occurred.",
       variant: "destructive",
     })
   } catch (error) {
     console.error("[v0] Login submit error:", error)
     toast({
-      title: "Error",
+      title: "⚠️ Error",
       description: "Something went wrong. Please try again.",
       variant: "destructive",
     })
