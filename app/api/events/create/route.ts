@@ -1,9 +1,11 @@
-import { createClient } from "@supabase/supabase-js"
+﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+
+import { normalizeEvent } from "@/lib/content"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
 export async function POST(req: Request) {
@@ -14,25 +16,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Title, start time, and end time are required" }, { status: 400 })
     }
 
-    // Create event - use start_time and end_time columns per database schema
-    const { data: event, error } = await supabase.from("events").insert({
-      title,
-      description,
-      start_time: start_date,
-      end_time: end_date,
-      location,
-      created_by: null, // Will be updated by admin action
-    })
+    const payloads = [
+      { title, description: description || "", start_time: start_date, end_time: end_date, location: location || "", image_url: image_url || "", created_by: null, approved: true },
+      { title, description: description || "", start_time: start_date, end_time: end_date, location: location || "", created_by: null, approved: true },
+      { title, description: description || "", start_time: start_date, end_time: end_date, location: location || "", created_by: null },
+      { title, description: description || "", start_time: start_date, end_time: end_date, location: location || "" },
+    ]
 
-    if (error) throw error
+    let created = null
+    let lastError: any = null
 
-    console.log("[v0] Event created:", event)
-    return NextResponse.json({ status: "OK", event })
+    for (const payload of payloads) {
+      const result = await supabase.from("events").insert(payload).select().single()
+      if (!result.error) {
+        created = result.data
+        lastError = null
+        break
+      }
+      lastError = result.error
+    }
+
+    if (lastError) throw lastError
+
+    return NextResponse.json({ status: "OK", event: normalizeEvent(created) })
   } catch (error) {
     console.error("[v0] Create event error:", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create event" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create event" }, { status: 500 })
   }
 }

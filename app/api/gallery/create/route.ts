@@ -1,9 +1,11 @@
+﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+
+import { encodeGalleryDescription, getVideoThumbnail } from "@/lib/content"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
 export async function POST(req: Request) {
@@ -17,52 +19,53 @@ export async function POST(req: Request) {
       uploadedBy,
       description = "",
       tags = [],
+      albumUrls = [],
+      embedUrl = "",
+      postKind = "gallery",
+      videoLayout = "auto",
     } = body
 
     if (!url) {
-      return NextResponse.json(
-        { error: "URL is required from Cloudinary" },
-        { status: 400 }
-      )
-    }
-    // Get user ID from uploaded_by (email)
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", uploadedBy)
-      .single()
-
-    const id = crypto.randomUUID()
-
-    const { error } = await supabase
-      .from("gallery")
-      .insert({
-        id,
-        title,
-        type,
-        url,
-        thumbnail,
-        uploaded_by: profile?.id,
-        description,
-        tags,
-        approved: false,
-      })
-
-    if (error) {
-      console.error("[v0] Supabase error:", error)
-      return NextResponse.json(
-        { error: "Failed to create gallery item" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: "A media URL is required" }, { status: 400 })
     }
 
-    console.log(`[v0] Gallery item created: ${id}`)
+    const { data: profile } = await supabase.from("profiles").select("id").eq("email", uploadedBy).single()
+
+    const safeTags = Array.isArray(tags) ? tags : []
+    const computedThumbnail = thumbnail || (type === "video" ? getVideoThumbnail(url) : url)
+    const descriptionPayload = encodeGalleryDescription({
+      text: description,
+      albumUrls: Array.isArray(albumUrls) ? albumUrls : [],
+      embedUrl,
+      postKind,
+      videoLayout,
+    })
+
+    const insertPayload = {
+      id: crypto.randomUUID(),
+      title,
+      type,
+      url,
+      thumbnail: computedThumbnail,
+      uploaded_by: profile?.id || null,
+      description: descriptionPayload,
+      tags: safeTags,
+    }
+
+    let insertResult = await supabase.from("gallery").insert({ ...insertPayload, approved: false })
+
+    if (insertResult.error) {
+      insertResult = await supabase.from("gallery").insert({ ...insertPayload, isApproved: false })
+    }
+
+    if (insertResult.error) {
+      console.error("[v0] Supabase error:", insertResult.error)
+      return NextResponse.json({ error: insertResult.error.message || "Failed to create gallery item" }, { status: 500 })
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("[v0] Gallery create error:", error)
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 })
   }
 }

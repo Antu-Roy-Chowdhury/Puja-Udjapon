@@ -1,267 +1,149 @@
-"use client"
+﻿"use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { Mail, Phone, Search, Users } from "lucide-react"
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Users, GraduationCap, Crown, Shield, User, Mail, Phone, MapPin } from "lucide-react"
 
-import { tr } from "date-fns/locale"
-
-interface Member {
+type Member = {
   id: string
   name: string
   position: string
-  role: "teacher" | "president" | "secretary" | "Senior" | "assistant" | "general" | "organizer" | "developer"
   department?: string
   series?: string
   email?: string
   phone?: string
-  location?: string
   avatar?: string
   joinDate: string
   bio?: string
   isAlumni: boolean
 }
 
-const departments = ["CSE", "EEE", "ME", "Civil", "Archi", "ETE", "ECE", "IPE", "GCE", "MSE", "CFPE", "BECM", "URP"]
-const series = Array.from({ length: 31 }, (_, i) => (1995 + i).toString())
+const departments = ["CSE", "EEE", "ME", "CE", "Arch", "ETE", "ECE", "IPE", "GCE", "MSE", "CFPE", "BECM", "URP"]
+const series = Array.from({ length: 10 }, (_, i) => (20 + i).toString())
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([])
-  const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [departmentFilter, setDepartmentFilter] = useState<string>("all")
   const [seriesFilter, setSeriesFilter] = useState<string>("all")
-  const [activeTab, setActiveTab] = useState("current")
+  const [activeTab, setActiveTab] = useState("committee")
 
-  // Mock data - replace with API call
   useEffect(() => {
-  setLoading(true)
-  fetch("/api/members")
-    .then(res => res.json())
-    .then(data => {
-      setMembers(data)
-      setFilteredMembers(data)
-    })
-    .finally(() => setLoading(false))
-}, [])
+    setLoading(true)
+    fetch("/api/members")
+      .then((res) => res.json())
+      .then((data) => setMembers(Array.isArray(data) ? data : []))
+      .finally(() => setLoading(false))
+  }, [])
 
-
-  // Filter members
-  useEffect(() => {
-    const filtered = members.filter((member) => {
+  const filteredMembers = useMemo(() => {
+    return members.filter((member) => {
       const matchesSearch =
         member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.department?.toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesDepartment = departmentFilter === "all" || member.department === departmentFilter
-      const matchesSeries = seriesFilter === "all" || member.series === seriesFilter
-      const matchesTab = activeTab === "current" ? !member.isAlumni : member.isAlumni
+      const matchesSeries = seriesFilter === "all" || member.series?.endsWith(seriesFilter)
+      const matchesTab = activeTab === "committee" ? !member.isAlumni : member.isAlumni
 
       return matchesSearch && matchesDepartment && matchesSeries && matchesTab
     })
-
-    // Sort by hierarchy: teachers > president > secretary > senior > assistant > general
-    const roleOrder = { teacher: 0, president: 1, secretary: 2, senior: 3, assistant: 4, general: 5 }
-    type RoleKey = keyof typeof roleOrder;
-    filtered.sort((a, b) => {
-      const aRole = a.role.toLowerCase() as RoleKey;
-      const bRole = b.role.toLowerCase() as RoleKey;
-      const roleComparison = roleOrder[aRole] - roleOrder[bRole];
-      if (roleComparison !== 0) return roleComparison
-      return a.name.localeCompare(b.name)
-    })
-
-    setFilteredMembers(filtered)
   }, [members, searchTerm, departmentFilter, seriesFilter, activeTab])
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "teacher":
-        return <GraduationCap className="w-4 h-4" />
-      case "president":
-        return <Crown className="w-4 h-4" />
-      case "secretary":
-        return <Shield className="w-4 h-4" />
-      case "senior":
-        return <Users className="w-4 h-4" />
-      default:
-        return <User className="w-4 h-4" />
-    }
-  }
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "teacher":
-        return "bg-purple-100 text-purple-800"
-      case "president":
-        return "bg-yellow-100 text-yellow-800"
-      case "secretary":
-        return "bg-blue-100 text-blue-800"
-      case "senior":
-        return "bg-green-100 text-green-800"
-      case "assistant":
-        return "bg-orange-100 text-orange-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+  const groupedMembers = useMemo(() => {
+    return filteredMembers.reduce<Record<string, Member[]>>((acc, member) => {
+      const group = member.position || "Committee Member"
+      if (!acc[group]) acc[group] = []
+      acc[group].push(member)
+      return acc
+    }, {})
+  }, [filteredMembers])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-orange-200 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-orange-100 rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <div className="min-h-screen bg-[#faf7f2]" />
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-serif font-bold text-gray-800 mb-4">Temple Members</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Meet our spiritual teachers, dedicated leadership, and vibrant community members
-          </p>
+    <div className="min-h-screen bg-[#faf7f2] py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-5 lg:px-6 space-y-8">
+        <div className="text-center max-w-3xl mx-auto">
+          <Badge className="bg-orange-100 text-orange-800 mb-4">Committee Directory</Badge>
+          <h1 className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-4">Executive Committee & Members</h1>
+          <p className="text-lg text-gray-600">Grouped by committee position, with member photos and contact details for a clearer public directory.</p>
         </div>
 
-        {/* Tabs for Current vs Alumni */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-            <TabsTrigger value="current">Current Members</TabsTrigger>
+            <TabsTrigger value="committee">Committee</TabsTrigger>
             <TabsTrigger value="alumni">Alumni</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab}>
-            {/* Filters */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TabsContent value={activeTab} className="space-y-6 mt-6">
+            <Card>
+              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search members..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Input placeholder="Search committee..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                 </div>
-
                 <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept} value={dept}>
-                        {dept}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Filter by department" /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">All Departments</SelectItem>{departments.map((dept) => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}</SelectContent>
                 </Select>
-
                 <Select value={seriesFilter} onValueChange={setSeriesFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by series" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Series</SelectItem>
-                    {series.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Filter by series" /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">All Series</SelectItem>{series.map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}</SelectContent>
                 </Select>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Members Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMembers.map((member) => (
-                <Card key={member.id} className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="text-center pb-4">
-                    <Avatar className="w-20 h-20 mx-auto mb-4">
-                      <AvatarImage src={member.avatar || "/placeholder.svg"} alt={member.name} />
-                      <AvatarFallback className="text-lg font-semibold bg-orange-100 text-orange-800">
-                        {member.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <CardTitle className="text-lg font-serif">{member.name}</CardTitle>
-                    <div className="flex items-center justify-center gap-2 mt-2">
-                      <Badge className={getRoleColor(member.role)}>
-                        {getRoleIcon(member.role)}
-                        <span className="ml-1 capitalize">{member.role}</span>
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-sm font-medium text-center text-gray-700">{member.position}</p>
-
-                    {member.department && (
-                      <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
-                        <span className="font-medium">{member.department}</span>
-                        {member.series && <span>Series {member.series}</span>}
-                      </div>
-                    )}
-
-                    {member.bio && <p className="text-sm text-gray-600 text-center line-clamp-3">{member.bio}</p>}
-
-                    <div className="space-y-2 pt-2 border-t">
-                      {member.email && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Mail className="w-4 h-4 mr-2 text-orange-500" />
-                          <span className="truncate">{member.email}</span>
-                        </div>
-                      )}
-                      {member.phone && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Phone className="w-4 h-4 mr-2 text-orange-500" />
-                          <span>{member.phone}</span>
-                        </div>
-                      )}
-                      {member.location && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-2 text-orange-500" />
-                          <span>{member.location}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-gray-500 text-center pt-2">
-                      Joined {new Date(member.joinDate).toLocaleDateString()}
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="space-y-8">
+              {Object.entries(groupedMembers).map(([position, people]) => (
+                <section key={position} className="space-y-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge className="bg-[#efe2c7] text-gray-900 border border-[#d9c7ab]">{position}</Badge>
+                    <span className="text-sm text-gray-500">{people.length} member{people.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {people.map((member) => (
+                      <Card key={member.id} className="border-[#d9c7ab] bg-white shadow-sm">
+                        <CardContent className="p-5 space-y-4">
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-16 w-16 border border-[#eadfcb]">
+                              <AvatarImage src={member.avatar || "/placeholder.svg"} alt={member.name} />
+                              <AvatarFallback>{member.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{member.name}</h3>
+                              <p className="text-sm text-gray-600">{member.department || "Department"} {member.series ? `• ${member.series}` : ""}</p>
+                            </div>
+                          </div>
+                          {member.bio ? <p className="text-sm text-gray-600 line-clamp-3">{member.bio}</p> : null}
+                          <div className="space-y-2 text-sm text-gray-600">
+                            {member.email ? <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-orange-500" /><span className="truncate">{member.email}</span></div> : null}
+                            {member.phone ? <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-orange-500" /><span>{member.phone}</span></div> : null}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
 
-            {filteredMembers.length === 0 && (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No members found</h3>
-                <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+            {filteredMembers.length === 0 ? (
+              <div className="text-center py-16">
+                <Users className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No members matched the current filters.</p>
               </div>
-            )}
+            ) : null}
           </TabsContent>
         </Tabs>
       </div>

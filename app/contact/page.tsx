@@ -1,482 +1,108 @@
-"use client"
+﻿"use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Mail, Phone, MapPin, Clock, Users, Crown, Shield, Settings, Code } from "lucide-react"
-import Image from "next/image"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Code, Mail, MapPin, Phone, Wrench } from "lucide-react"
 
-interface ContactPerson {
-  id: string
-  name: string
-  position: string
-  category: "leadership" | "administration" | "technical" | "spiritual"
-  email: string
-  phone: string
-  location?: string
-  avatar?: string
-  responsibilities: string[]
-  availability?: string
-}
+const officeContacts = [
+  {
+    title: "পরিষদীয় যোগাযোগ ও সমন্বয়",
+    subtitle: "পূজা সংক্রান্ত সর্বশেষ তথ্য, স্বেচ্ছাসেবক দল গঠন এবং সদস্যপদ সহায়তার জন্য এখানে যোগাযোগ করুন।",
+    email: "pujaudjaponruet@gmail.com",
+    phone: "+880 1700 000000",
+    location: "RUET Campus, Rajshahi",
+  },
+  {
+    title: "সেবামূলক অর্ঘ্য ও আর্থিক তথ্যানুসন্ধান",
+    subtitle: "আপনার প্রদত্ত অনুদান নিশ্চিতকরণ, পেমেন্ট রেফারেন্স এবং আর্থিক যেকোনো জিজ্ঞাসায় আমরা আপনার পাশে আছি।",
+    email: "donation.pujaudjapon@gmail.com",
+    phone: "+880 1800 000000",
+    location: "Finance Desk, RUET Campus",
+  },
+]
 
 export default function ContactPage() {
-  const [contacts, setContacts] = useState<ContactPerson[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Mock data - replace with API call
-  useEffect(() => {
-    const mockContacts: ContactPerson[] = [
-      // Spiritual Leadership
-      {
-        id: "1",
-        name: "Kapil Deb",
-        position: "Head Teacher & Spiritual Guide",
-        category: "spiritual",
-        email: "spiritual.guide@temple.org",
-        phone: "+880-1234-567890",
-        location: "Main Temple Hall",
-        avatar: "/kapil.jpg",
-        responsibilities: [
-          "Spiritual guidance and counseling",
-          "Dharma teachings and meditation sessions",
-          "Religious ceremonies and rituals",
-          "Community spiritual development",
-        ],
-        availability: "Daily 6:00 AM - 8:00 PM",
-      },
-      {
-        id: "2",
-        name: "Kapil Deb",
-        position: "Meditation Instructor",
-        category: "spiritual",
-        email: "meditation@temple.org",
-        phone: "+880-1234-567891",
-        location: "Meditation Hall",
-        avatar: "/kapil.jpg",
-        responsibilities: [
-          "Meditation classes and workshops",
-          "Mindfulness training programs",
-          "Stress relief and wellness sessions",
-          "Youth meditation programs",
-        ],
-        availability: "Mon-Fri 9:00 AM - 6:00 PM",
-      },
-      // Temple Leadership
-      {
-        id: "3",
-        name: "Kapil Deb",
-        position: "Temple President",
-        category: "leadership",
-        email: "president@temple.org",
-        phone: "+880-1234-567892",
-        location: "Administrative Office",
-        avatar: "/kapil.jpg",
-        responsibilities: [
-          "Overall temple administration",
-          "Strategic planning and development",
-          "Community relations and partnerships",
-          "Board meetings and governance",
-        ],
-        availability: "Mon-Fri 10:00 AM - 5:00 PM",
-      },
-      {
-        id: "4",
-        name: "Kapil Deb",
-        position: "General Secretary",
-        category: "leadership",
-        email: "secretary@temple.org",
-        phone: "+880-1234-567893",
-        location: "Secretary Office",
-        avatar: "/kapil.jpg",
-        responsibilities: [
-          "Member registration and records",
-          "Communication and correspondence",
-          "Meeting coordination and minutes",
-          "Document management",
-        ],
-        availability: "Mon-Sat 9:00 AM - 6:00 PM",
-      },
-      // Administration
-      {
-        id: "5",
-        name: "Kapil Deb",
-        position: "Event Coordinator",
-        category: "administration",
-        email: "events@temple.org",
-        phone: "+880-1234-567894",
-        location: "Event Planning Office",
-        avatar: "/kapil.jpg",
-        responsibilities: [
-          "Festival and ceremony planning",
-          "Community event organization",
-          "Venue management and logistics",
-          "Volunteer coordination",
-        ],
-        availability: "Tue-Sun 8:00 AM - 7:00 PM",
-      },
-      {
-        id: "6",
-        name: "Kapil Deb",
-        position: "Finance Manager",
-        category: "administration",
-        email: "finance@temple.org",
-        phone: "+880-1234-567895",
-        location: "Finance Office",
-        responsibilities: [
-          "Financial planning and budgeting",
-          "Donation management",
-          "Expense tracking and reporting",
-          "Audit coordination",
-        ],
-        availability: "Mon-Fri 9:00 AM - 5:00 PM",
-      },
-      {
-        id: "7",
-        name: "Kapil Deb",
-        position: "Facilities Manager",
-        category: "administration",
-        email: "facilities@temple.org",
-        phone: "+880-1234-567896",
-        location: "Maintenance Office",
-        responsibilities: [
-          "Building maintenance and repairs",
-          "Security and safety management",
-          "Utilities and infrastructure",
-          "Cleaning and housekeeping coordination",
-        ],
-        availability: "Daily 7:00 AM - 6:00 PM",
-      },
-      // Technical Support
-      {
-        id: "8",
-        name: "Kapil Deb",
-        position: "IT Administrator",
-        category: "technical",
-        email: "it.support@temple.org",
-        phone: "+880-1234-567897",
-        location: "IT Office",
-        responsibilities: [
-          "Website and system maintenance",
-          "Audio/visual equipment support",
-          "Online streaming and broadcasts",
-          "Digital communication platforms",
-        ],
-        availability: "Mon-Fri 10:00 AM - 6:00 PM",
-      },
-    ]
-
-    setContacts(mockContacts)
-    setLoading(false)
-  }, [])
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "spiritual":
-        return <Crown className="w-5 h-5" />
-      case "leadership":
-        return <Shield className="w-5 h-5" />
-      case "administration":
-        return <Settings className="w-5 h-5" />
-      case "technical":
-        return <Code className="w-5 h-5" />
-      default:
-        return <Users className="w-5 h-5" />
-    }
-  }
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "spiritual":
-        return "bg-purple-100 text-purple-800"
-      case "leadership":
-        return "bg-yellow-100 text-yellow-800"
-      case "administration":
-        return "bg-blue-100 text-blue-800"
-      case "technical":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const groupedContacts = contacts.reduce(
-    (acc, contact) => {
-      if (!acc[contact.category]) {
-        acc[contact.category] = []
-      }
-      acc[contact.category].push(contact)
-      return acc
-    },
-    {} as Record<string, ContactPerson[]>,
-  )
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-orange-200 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-orange-100 rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-serif font-bold text-gray-800 mb-4">Contact Us</h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Connect with our dedicated team members who are here to serve and support our temple community. Each person
-            brings unique expertise and is committed to helping you with your spiritual journey.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff7ed,white_55%)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+        <section className="text-center max-w-3xl mx-auto">
+          <Badge className="bg-orange-100 text-orange-700 mb-4">যোগাযোগ</Badge>
+          <h1 className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-4">রুয়েট পূজা উদযাপন পরিষদ</h1>
+          <p className="text-lg text-gray-600">সদস্যপদ, উৎসব সমন্বয়, দান বা সেবামূলক অনুদান নিশ্চিতকরণ এবং কারিগরি সহায়তার জন্য নিচের মাধ্যমগুলো ব্যবহার করুন। আপনাদের সুবিধার্থে আমরা এই পাতাটিকে সুনির্দিষ্ট রেখেছি যেন দায়িত্বপ্রাপ্ত ব্যক্তিবর্গের সাথে সরাসরি যোগাযোগ সহজ হয়।</p>
+        </section>
 
-        {/* Emergency Contact */}
-        <div className="bg-orange-100 border border-orange-200 rounded-lg p-6 mb-8">
-          <div className="flex items-center mb-4">
-            <Phone className="w-6 h-6 text-orange-600 mr-3" />
-            <h2 className="text-xl font-semibold text-orange-800">Emergency Contact</h2>
-          </div>
-          <p className="text-orange-700 mb-2">
-            For urgent spiritual guidance or temple emergencies, please call our 24/7 helpline:
-          </p>
-          <p className="text-2xl font-bold text-orange-800">+880-1234-567800</p>
-        </div>
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {officeContacts.map((contact) => (
+            <Card key={contact.title} className="border-orange-100 shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-serif text-2xl text-gray-900">{contact.title}</CardTitle>
+                <p className="text-sm text-gray-500">{contact.subtitle}</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3 text-sm text-gray-700"><Mail className="w-4 h-4 text-orange-500" /><a href={`mailto:${contact.email}`} className="hover:underline">{contact.email}</a></div>
+                <div className="flex items-center gap-3 text-sm text-gray-700"><Phone className="w-4 h-4 text-orange-500" /><a href={`tel:${contact.phone}`} className="hover:underline">{contact.phone}</a></div>
+                <div className="flex items-center gap-3 text-sm text-gray-700"><MapPin className="w-4 h-4 text-orange-500" /><span>{contact.location}</span></div>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
 
-        {/* Contact Categories */}
-        {Object.entries(groupedContacts).map(([category, categoryContacts]) => (
-          <div key={category} className="mb-12">
-            <div className="flex items-center mb-6">
-              {getCategoryIcon(category)}
-              <h2 className="text-2xl font-serif font-bold text-gray-800 ml-3 capitalize">
-                {category === "spiritual"
-                  ? "Spiritual Guidance"
-                  : category === "leadership"
-                    ? "Temple Leadership"
-                    : category === "administration"
-                      ? "Administration"
-                      : "Technical Support"}
-              </h2>
-            </div>
+        <section className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
+          <Card className="border-orange-100 shadow-sm">
+            <CardHeader>
+              <CardTitle className="font-serif text-2xl text-gray-900">মন্দির ও পরিচালনা পর্ষদ সহায়তা</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5 text-gray-600 leading-relaxed">
+              <div className="rounded-2xl bg-orange-50 p-5 border border-orange-100">
+                <p className="font-medium text-gray-900 mb-2">Best for:</p>
+                <p>Membership approval, committee communication, event participation, gallery issues, profile problems, and campus puja coordination.</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="rounded-2xl border p-4">
+                  <div className="flex items-center gap-2 mb-2 text-gray-900 font-medium"><Wrench className="w-4 h-4 text-orange-500" />Office Hours</div>
+                  <p className="text-sm">Sunday to Thursday, 10:00 AM to 5:00 PM</p>
+                </div>
+                <div className="rounded-2xl border p-4">
+                  <div className="flex items-center gap-2 mb-2 text-gray-900 font-medium"><MapPin className="w-4 h-4 text-orange-500" />Location</div>
+                  <p className="text-sm">RUET campus community coordination desk</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoryContacts.map((contact) => (
-                <Card key={contact.id} className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="text-center pb-4">
-                    <Avatar className="w-20 h-20 mx-auto mb-4">
-                      <AvatarImage src={contact.avatar || "/placeholder.svg"} alt={contact.name} />
-                      <AvatarFallback className="text-lg font-semibold bg-orange-100 text-orange-800">
-                        {contact.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <CardTitle className="text-lg font-serif">{contact.name}</CardTitle>
-                    <Badge className={getCategoryColor(contact.category)}>
-                      {getCategoryIcon(contact.category)}
-                      <span className="ml-1">{contact.position}</span>
-                    </Badge>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Contact Information */}
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm">
-                        <Mail className="w-4 h-4 mr-3 text-orange-500 flex-shrink-0" />
-                        <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline truncate">
-                          {contact.email}
-                        </a>
-                      </div>
-
-                      <div className="flex items-center text-sm">
-                        <Phone className="w-4 h-4 mr-3 text-orange-500 flex-shrink-0" />
-                        <a href={`tel:${contact.phone}`} className="text-blue-600 hover:underline">
-                          {contact.phone}
-                        </a>
-                      </div>
-
-                      {contact.location && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-3 text-orange-500 flex-shrink-0" />
-                          <span>{contact.location}</span>
-                        </div>
-                      )}
-
-                      {contact.availability && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Clock className="w-4 h-4 mr-3 text-orange-500 flex-shrink-0" />
-                          <span>{contact.availability}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Responsibilities */}
-                    <div className="pt-3 border-t">
-                      <h4 className="font-semibold text-sm text-gray-700 mb-2">Responsibilities:</h4>
-                      <ul className="text-xs text-gray-600 space-y-1">
-                        {contact.responsibilities.map((responsibility, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="w-1 h-1 bg-orange-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                            {responsibility}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Contact Buttons */}
-                    <div className="flex gap-2 pt-3">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-orange-500 hover:bg-orange-600"
-                        onClick={() => (window.location.href = `mailto:${contact.email}`)}
-                      >
-                        <Mail className="w-3 h-3 mr-1" />
-                        Email
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 bg-transparent"
-                        onClick={() => (window.location.href = `tel:${contact.phone}`)}
-                      >
-                        <Phone className="w-3 h-3 mr-1" />
-                        Call
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* General Information */}
-        <div className="bg-white rounded-lg shadow-md p-8 mt-12">
-          <h2 className="text-2xl font-serif font-bold text-gray-800 mb-6 text-center">Temple Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="font-semibold text-lg mb-3">Address</h3>
-              <p className="text-gray-600 mb-4">
-                Buddha Temple
-                <br />
-                123 Spiritual Path
-                <br />
-                Dhaka 1000, Bangladesh
-              </p>
-
-              <h3 className="font-semibold text-lg mb-3">Temple Hours</h3>
-              <div className="text-gray-600 space-y-1">
-                <p>
-                  <strong>Daily:</strong> 5:00 AM - 9:00 PM
-                </p>
-                <p>
-                  <strong>Meditation Sessions:</strong> 6:00 AM, 6:00 PM
-                </p>
-                <p>
-                  <strong>Dharma Talks:</strong> Sundays 3:00 PM
-                </p>
+          <Card className="border-orange-100 shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-br from-orange-500 via-orange-400 to-amber-300 p-6 text-white">
+              <div className="flex items-center gap-3 mb-4">
+                <Code className="w-5 h-5" />
+                <span className="uppercase tracking-[0.2em] text-xs font-semibold">Developer</span>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <Avatar className="w-28 h-28 border-4 border-white/70 shadow-lg mb-4">
+                  <AvatarImage src="/dev.jpg" alt="Antu Roy Chowdhury" />
+                  <AvatarFallback>ARC</AvatarFallback>
+                </Avatar>
+                <h2 className="font-serif text-2xl font-bold">অন্তু রায় চৌধুরী</h2>
+                <p className="text-white/90 mt-2">কারিগরি ও ডিজিটাল সহায়তায়</p>
               </div>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-lg mb-3">Getting Here</h3>
-              <p className="text-gray-600 mb-4">
-                The temple is easily accessible by public transportation. Bus routes 12, 25, and 48 stop nearby. Parking
-                is available on-site.
-              </p>
-
-              <h3 className="font-semibold text-lg mb-3">Donations</h3>
-              <p className="text-gray-600">
-                Your generous donations help maintain our temple and support community programs. Contact our Finance
-                Manager for donation information.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* General Information */}
-        <div className="bg-white rounded-lg shadow-md p-8 mt-12">
-          <h2 className="text-2xl font-serif font-bold text-gray-800 mb-6 text-center">Website Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
-            <div>
-                <Card className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="text-center pb-4">
-                    <Avatar className="w-40 h-40 mx-auto mb-4">
-                      <AvatarImage src="/dev.jpg" alt= "antu ROy Chowdhury" />
-                      {/* <AvatarFallback className="text-lg font-semibold bg-orange-100 text-orange-800">
-                        {contact.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback> */}
-                    </Avatar>
-                    <CardTitle className="text-lg font-serif">Antu Roy Chowdhury</CardTitle>
-                    <Badge className={getCategoryColor("technical")}>
-                      {getCategoryIcon("technical")}
-                      <span className="ml-1">Developer</span>
-                    </Badge>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Contact Information */}
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm">
-                        <Mail className="w-4 h-4 mr-3 text-orange-500 flex-shrink-0" />
-                        <a href={`mailto:${"anturoychowdhury3@gmail.com"}`} className="text-blue-600 hover:underline truncate">
-                          anturoychowdhury3@gmail.com
-                        </a>
-                      </div>
-
-                      <div className="flex items-center text-sm">
-                        <Phone className="w-4 h-4 mr-3 text-orange-500 flex-shrink-0" />
-                        <a href={`tel:${"+8801710-907476"}`} className="text-blue-600 hover:underline">
-                          +8801710-907476
-                        </a>
-                      </div>
-
-              
-
-              
-                    </div>
-
-
-                    {/* Contact Buttons */}
-                    <div className="flex gap-2 pt-3">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-orange-500 hover:bg-orange-600"
-                        onClick={() => (window.location.href = `mailto:${"anturoychowdhury3@gmail.com"}`)}
-                      >
-                        <Mail className="w-3 h-3 mr-1" />
-                        Email
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 bg-transparent"
-                        onClick={() => (window.location.href = `tel:${"+8801710-907476"}`)}
-                      >
-                        <Phone className="w-3 h-3 mr-1" />
-                        Call
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-            </div>
-          </div>
-        </div>
+            <CardContent className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">লগইন সমস্যা, ছবি আপলোড করতে বিঘ্ন ঘটা কিংবা ওয়েবসাইটের নতুন কোনো ফিচারের অনুরোধের জন্য আমাদের ডেভেলপার টিমের সাথে যোগাযোগ করুন।</p>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-orange-500" /><a href="mailto:anturoychowdhury3@gmail.com" className="text-gray-700 hover:underline">anturoychowdhury3@gmail.com</a></div>
+                <div className="flex items-center gap-3"><Phone className="w-4 h-4 text-orange-500" /><a href="tel:+8801710907476" className="text-gray-700 hover:underline">+8801710-907476</a></div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button className="flex-1" variant="outline" asChild><a href="https://anturoychowdhury.vercel.app/" target="_blank" rel="noopener noreferrer">Website</a></Button>
+                <Button className="flex-1 bg-orange-500 hover:bg-orange-600" asChild><a href="mailto:anturoychowdhury3@gmail.com">Email</a></Button>
+                <Button className="flex-1" variant="outline" asChild><a href="tel:+8801710907476">Call</a></Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </div>
   )
 }
+

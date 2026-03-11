@@ -1,29 +1,22 @@
-import { createClient } from "@supabase/supabase-js"
+﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+
+import { normalizeActivity } from "@/lib/content"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
 export async function GET() {
   try {
-    // Fetch approved gallery items from Supabase
-    const { data, error } = await supabase
-      .from("gallery")
-      .select("*")
-      .eq("approved", true)
-      .order("created_at", { ascending: false })
-
+    const { data, error } = await supabase.from("activities").select("*")
     if (error) throw error
 
-    console.log("[v0] Gallery items fetched:", data)
-    return NextResponse.json({ gallery: data })
+    const activities = (data || []).map((activity) => normalizeActivity(activity)).sort((a, b) => a.name.localeCompare(b.name))
+    return NextResponse.json({ activities })
   } catch (error) {
-    console.error("[v0] Gallery list error:", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch gallery" },
-      { status: 500 }
-    )
+    console.error("[v0] Activities list error:", error)
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to fetch activities" }, { status: 500 })
   }
 }

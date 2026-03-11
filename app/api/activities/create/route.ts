@@ -1,39 +1,44 @@
-import { createClient } from "@supabase/supabase-js"
+﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+
+import { normalizeActivity } from "@/lib/content"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
 export async function POST(req: Request) {
   try {
-    const { name, description, image_url, schedule, duration, level } = await req.json()
+    const { name, description, image_url, schedule, duration, level, active } = await req.json()
 
-    if (!name) {
-      return NextResponse.json({ error: "Activity name is required" }, { status: 400 })
+    if (!name || !description) {
+      return NextResponse.json({ error: "Name and description are required" }, { status: 400 })
     }
 
-    // Create activity with correct column name 'image'
-    const { data: activity, error } = await supabase.from("activities").insert({
-      name,
-      description,
-      image: image_url, // Use 'image' column as per database schema
-      schedule,
-      duration,
-      level,
-      active: true, // New activities are active by default
-    })
+    const { data, error } = await supabase
+      .from("activities")
+      .insert({
+        name,
+        description,
+        image: image_url || "",
+        schedule: schedule || "",
+        duration: duration || "",
+        level: level || "beginner",
+        active: typeof active === "boolean" ? active : true,
+      })
+      .select()
+      .single()
 
     if (error) throw error
 
-    console.log("[v0] Activity created:", activity)
-    return NextResponse.json({ status: "OK", activity })
+    return NextResponse.json({ status: "OK", activity: normalizeActivity(data) })
   } catch (error) {
     console.error("[v0] Create activity error:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to create activity" },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
+

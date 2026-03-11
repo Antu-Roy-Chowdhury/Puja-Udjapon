@@ -1,15 +1,15 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import { Button } from "./ui/button"
 
 export function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-[90rem] mx-auto px-4 sm:px-5 lg:px-6 py-12">
         {/* Join Community Section */}
         <div className="text-center mb-12">
-          <h2 className="font-serif text-3xl font-bold mb-4">You Join Our Community?</h2>
+          <h2 className="font-serif text-3xl font-bold mb-4">আত্মিক শান্তির সন্ধানে আমাদের সাথে</h2>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-            <Link href="/signup">JOIN US</Link>
+            <Link href="/signup">আমাদের পরিবারে যোগ দিন</Link>
           </Button>
         </div>
 
@@ -77,3 +77,4 @@ export function Footer() {
     </footer>
   )
 }
+

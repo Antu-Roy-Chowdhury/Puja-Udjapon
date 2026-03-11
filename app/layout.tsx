@@ -1,11 +1,10 @@
-import type React from "react"
+﻿import type React from "react"
 import type { Metadata } from "next"
 import { Playfair_Display, Open_Sans } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/components/auth-provider"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import Image from "next/image"
 import { Toaster as SonnerToaster } from "sonner"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -22,25 +21,21 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "সার্বজনীন পূজা উদযাপন পরিষদ, রুয়েট",
-  description: "Join our community for spiritual growth, and enlightenment",
+  title: "সার্বজনীন পূজা উদযাপন পরিষদ, রুয়েট",
+  description: "Join our community for spiritual growth and service.",
   generator: "v0.app",
-    icons: {
-    icon: "/favicon.png", // 👈 This sets the favicon
+  icons: {
+    icon: "/favicon.png",
   },
-
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${openSans.variable} antialiased`}>
+    <html lang="bn" className={`${playfair.variable} ${openSans.variable} antialiased`}>
       <body className="font-sans">
         <AuthProvider>
-          <Navigation />{children}
+          <Navigation />
+          {children}
           <Toaster />
           <SonnerToaster />
           <Footer />

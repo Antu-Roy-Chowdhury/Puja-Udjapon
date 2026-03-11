@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-// import { uploadToCloudinary } from "@/lib/cloudinaryUpload"
+import { uploadToCloudinary } from "@/lib/cloudinaryUpload"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,38 +16,6 @@ import { useAuth } from "@/components/auth-provider"
 
 const departments = ["CSE", "EEE", "ME", "Civil", "Archi", "ETE", "ECE", "IPE", "GCE", "MSE", "CFPE", "BECM", "URP"]
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
-
-async function uploadToCloudinary(file: File) {
-  const signRes = await fetch("/api/cloudinary/sign", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ folder: "temple/profile" }),
-  })
-  if (!signRes.ok) throw new Error("Signature failed")
-
-  const { signature, timestamp, cloudName, apiKey, folder } = await signRes.json()
-
-  const formData = new FormData()
-  formData.append("file", file)
-  formData.append("api_key", apiKey)
-  formData.append("timestamp", timestamp)
-  formData.append("signature", signature)
-  formData.append("folder", folder)
-
-  const uploadRes = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-    { method: "POST", body: formData }
-  )
-
-  const data = await uploadRes.json()
-
-  if (!uploadRes.ok) {
-    console.error("[v0] Cloudinary error:", data)
-    throw new Error(data.error?.message || "Upload failed")
-  }
-
-  return data.secure_url
-}
 
 export default function SignupPage() {
   const { signup } = useAuth()
@@ -62,89 +30,67 @@ export default function SignupPage() {
     photo: null as File | null,
   })
   const [isLoading, setIsLoading] = useState(false)
-  
+
   const router = useRouter()
   const { toast } = useToast()
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setIsLoading(true)
-  console.log("[v0] Signup form submitted:", formData)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
 
-  try {
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.password || !formData.department || !formData.series) {
-      console.log("[v0] Validation failed: missing fields")
-      toast({
-        title: "Validation error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      })
-      setIsLoading(false)
-      return
-    }
-
-    // Validate password length
-    if (formData.password.length < 6) {
-      console.log("[v0] Password too short")
-      toast({
-        title: "Weak password",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      })
-      setIsLoading(false)
-      return
-    }
-
-    let photoUrl = null
-
-    if (formData.photo) {
-      try {
-        console.log("[v0] Uploading photo...")
-        photoUrl = await uploadToCloudinary(formData.photo)
-        console.log("[v0] Photo uploaded:", photoUrl)
-      } catch (photoErr: any) {
-        console.error("[v0] Photo upload error:", photoErr)
+    try {
+      if (!formData.name || !formData.email || !formData.password || !formData.department || !formData.series || !formData.contact || !formData.bloodGroup) {
         toast({
-          title: "Photo upload failed",
-          description: photoErr.message || "Failed to upload photo. You can continue without it.",
+          title: "Validation error",
+          description: "Please fill in all required fields.",
           variant: "destructive",
         })
-        // Continue without photo
+        return
       }
+
+      if (formData.password.length < 6) {
+        toast({
+          title: "Weak password",
+          description: "Password must be at least 6 characters long.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      let photoUrl: string | null = null
+
+      if (formData.photo) {
+        photoUrl = await uploadToCloudinary(formData.photo, "temple/profile", "image")
+      }
+
+      await signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        department: formData.department,
+        series: formData.series,
+        contact: formData.contact,
+        bloodGroup: formData.bloodGroup,
+        photo: photoUrl,
+      })
+
+      toast({
+        title: "Account created successfully",
+        description: "Your account is pending admin approval. You will be able to log in after approval.",
+      })
+
+      router.push("/login")
+    } catch (err: any) {
+      console.error("[v0] Signup error:", err)
+      toast({
+        title: "Signup failed",
+        description: err.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    console.log("[v0] Calling signup API...")
-    const ok = await signup({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      department: formData.department,
-      series: formData.series,
-      photo: photoUrl,
-    })
-
-    console.log("[v0] Signup response:", ok)
-
-    toast({
-      title: "Account created successfully",
-      description: "Your account is pending admin approval. You'll be notified once approved.",
-    })
-
-    router.push("/login")
-  } catch (err: any) {
-    console.error("[v0] Signup error:", err)
-    toast({
-      title: "Signup failed",
-      description: err.message || "Something went wrong. Please try again.",
-      variant: "destructive",
-    })
-  } finally {
-    setIsLoading(false)
   }
-}
-
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -156,16 +102,15 @@ const handleSubmit = async (e: React.FormEvent) => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div >
+              <div>
                 <Label htmlFor="name">Full Name</Label>
                 <Input
-                  
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   placeholder="Enter your full name"
-                  className="mt-1" 
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -177,7 +122,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   placeholder="your@email.com"
-                  className="mt-1" 
+                  className="mt-1"
                 />
               </div>
             </div>
@@ -185,14 +130,8 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="series">Series (Year)</Label>
-                <Select
-  value={formData.series}
-  onValueChange={(value) =>
-    setFormData({ ...formData, series: value })
-  }
->
-
-                  <SelectTrigger>
+                <Select value={formData.series} onValueChange={(value) => setFormData({ ...formData, series: value })}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -206,10 +145,9 @@ const handleSubmit = async (e: React.FormEvent) => {
               </div>
               <div>
                 <Label htmlFor="department">Department</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, department: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department"
-                  className="mt-1"  />
+                <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
                     {departments.map((dept) => (
@@ -232,15 +170,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                   onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
                   required
                   placeholder="Your phone number"
-                  className="mt-1" 
+                  className="mt-1"
                 />
               </div>
               <div>
                 <Label htmlFor="bloodGroup">Blood Group</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, bloodGroup: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select blood group" 
-                  className="mt-1" />
+                <Select value={formData.bloodGroup} onValueChange={(value) => setFormData({ ...formData, bloodGroup: value })}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select blood group" />
                   </SelectTrigger>
                   <SelectContent>
                     {bloodGroups.map((group) => (
@@ -262,7 +199,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 placeholder="Create a password"
-                  className="mt-1" 
+                className="mt-1"
               />
             </div>
 
