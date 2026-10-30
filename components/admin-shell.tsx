@@ -8,12 +8,14 @@ import { useAuth } from "@/components/auth-provider"
 
 const links = [
   { href: "/admin", label: "Overview", icon: Home, roles: ["admin", "super_admin"] },
-  { href: "/profile?tab=admin", label: "Approvals", icon: Users, roles: ["admin", "super_admin"] },
+  { href: "/admin/approvals", label: "Approvals", icon: Users, roles: ["admin", "super_admin"] },
   { href: "/admin/welcome-media", label: "Home Page", icon: Film, roles: ["admin", "super_admin"] },
   { href: "/admin/events", label: "Events", icon: Calendar, roles: ["admin", "super_admin"] },
   { href: "/admin/activities", label: "Activities", icon: ImageIcon, roles: ["admin", "super_admin"] },
   { href: "/admin/donations", label: "Donations", icon: DollarSign, roles: ["super_admin"] },
   { href: "/admin/committee", label: "Committees", icon: Users, roles: ["super_admin"] },
+  { href: "/admin/developers", label: "Developers", icon: Users, roles: ["super_admin"] },
+  { href: "/admin/members/new", label: "Add Member", icon: Users, roles: ["admin", "super_admin"] },
   { href: "/admin/roles", label: "Roles", icon: ShieldCheck, roles: ["super_admin"] },
 ]
 

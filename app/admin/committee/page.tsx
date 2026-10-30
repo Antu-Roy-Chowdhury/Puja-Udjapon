@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 
 type Member = { id: string; name: string; email?: string; department?: string; series?: string; avatar?: string; position?: string; committee_member_id?: string; display_order?: number }
-type Committee = { id: string; year: number; title: string; description?: string; members?: Member[] }
+type Committee = { id: string; year: number; title: string; description?: string; term_start?: string; term_end?: string; members?: Member[] }
 const departments = ["CSE", "EEE", "ME", "CE", "Arch", "ETE", "ECE", "IPE", "GCE", "MSE", "CFPE", "BECM", "URP"]
 
 export default function AdminCommitteePage() {
@@ -33,7 +33,8 @@ export default function AdminCommitteePage() {
   const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [assignment, setAssignment] = useState({ position: "Committee Member", displayOrder: "0" })
   const [createOpen, setCreateOpen] = useState(false)
-  const [newCommittee, setNewCommittee] = useState({ year: String(new Date().getFullYear()), title: "", description: "" })
+  const [newCommittee, setNewCommittee] = useState({ year: String(new Date().getFullYear()), title: "", description: "", termStart: "", termEnd: "" })
+  const [editingCommittee, setEditingCommittee] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -74,8 +75,8 @@ export default function AdminCommitteePage() {
   const createCommittee = async () => {
     setSaving(true)
     try {
-      const data = await performAction({ action: "create", ...newCommittee, title: newCommittee.title || `${newCommittee.year} Committee` })
-      setCreateOpen(false); await loadCommittees(String(data.committee.year)); toast({ title: "Committee saved successfully" })
+      const data = await performAction({ action: editingCommittee ? "edit" : "create", committeeId: editingCommittee ? committee?.id : undefined, ...newCommittee, title: newCommittee.title || `${newCommittee.year} Committee` })
+      setCreateOpen(false); setEditingCommittee(false); await loadCommittees(String(data.committee.year)); toast({ title: "Committee saved successfully" })
     } catch (error) { toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to save committee", variant: "destructive" }) } finally { setSaving(false) }
   }
 
@@ -128,16 +129,16 @@ export default function AdminCommitteePage() {
           </div>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-5 shadow-sm">
+              <Button onClick={() => { setEditingCommittee(false); setNewCommittee({ year: String(new Date().getFullYear()), title: "", description: "", termStart: "", termEnd: "" }) }} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-5 shadow-sm">
                 <Plus className="mr-2 h-4 w-4" /> New Committee
               </Button>
             </DialogTrigger>
             <DialogContent className="rounded-2xl p-6 sm:p-8">
-              <DialogHeader><DialogTitle className="font-serif text-2xl font-bold">Create Yearly Committee</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-serif text-2xl font-bold">{editingCommittee ? "Edit Committee" : "Create Yearly Committee"}</DialogTitle></DialogHeader>
               <div className="space-y-4 pt-2">
                 <div>
                   <Label className="text-sm font-semibold">Year *</Label>
-                  <Input type="number" value={newCommittee.year} onChange={(e) => setNewCommittee({ ...newCommittee, year: e.target.value })} className="rounded-xl mt-1" />
+                  <Input type="number" disabled={editingCommittee} value={newCommittee.year} onChange={(e) => setNewCommittee({ ...newCommittee, year: e.target.value })} className="rounded-xl mt-1" />
                 </div>
                 <div>
                   <Label className="text-sm font-semibold">Title</Label>
@@ -147,6 +148,7 @@ export default function AdminCommitteePage() {
                   <Label className="text-sm font-semibold">Description</Label>
                   <Textarea value={newCommittee.description} onChange={(e) => setNewCommittee({ ...newCommittee, description: e.target.value })} placeholder="Optional committee note..." className="rounded-xl mt-1" />
                 </div>
+                <div className="grid grid-cols-2 gap-3"><label className="text-sm">Term start<Input type="date" value={newCommittee.termStart} onChange={(e) => setNewCommittee({ ...newCommittee, termStart: e.target.value })} /></label><label className="text-sm">Term end<Input type="date" value={newCommittee.termEnd} onChange={(e) => setNewCommittee({ ...newCommittee, termEnd: e.target.value })} /></label></div>
                 <Button onClick={createCommittee} disabled={saving} className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full py-6 mt-2">
                   {saving ? "Saving…" : "Save Committee"}
                 </Button>
@@ -183,10 +185,11 @@ export default function AdminCommitteePage() {
             {/* Committee Overview Banner */}
             <Card className="rounded-2xl border-gray-100 bg-white shadow-sm overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent pb-4">
-                <CardTitle className="font-serif text-2xl text-gray-900">{committee.title}</CardTitle>
+                <div className="flex items-center justify-between gap-3"><CardTitle className="font-serif text-2xl text-gray-900">{committee.title}</CardTitle><Button variant="outline" onClick={() => { setEditingCommittee(true); setNewCommittee({ year: String(committee.year), title: committee.title, description: committee.description || "", termStart: committee.term_start?.slice(0, 10) || "", termEnd: committee.term_end?.slice(0, 10) || "" }); setCreateOpen(true) }}>Edit Committee</Button></div>
               </CardHeader>
               <CardContent className="pt-4">
                 <p className="text-sm text-gray-600 font-light">{committee.description || "No description provided for this term."}</p>
+                {(committee.term_start || committee.term_end) && <p className="text-xs text-gray-500 mt-2">Term: {committee.term_start?.slice(0, 10) || "Unspecified"} to {committee.term_end?.slice(0, 10) || "Unspecified"}</p>}
               </CardContent>
             </Card>
 

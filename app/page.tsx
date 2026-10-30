@@ -11,40 +11,30 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { getActivities } from "@/lib/getActivities"
 import { getEvents } from "@/lib/getEvents"
 import { getGallery } from "@/lib/getGallery"
-
-// Optional: Fetch dynamic homepage settings from your database API
-async function getHomePageSettings() {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ""}/api/settings/homepage`, { cache: "no-store" })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.settings || null
-  } catch {
-    return null
-  }
-}
+import { getEmbedUrl, getVideoPlatform } from "@/lib/content"
+import { getHomepageSettings } from "@/lib/homepage"
 
 export default async function HomePage() {
   const [galleryItems, upcomingEvents, activities, settings] = await Promise.all([
     getGallery(20), 
     getEvents(4), 
     getActivities(6),
-    getHomePageSettings()
+    getHomepageSettings()
   ])
 
-  const promoVideo = galleryItems.find((item) => item.postKind === "promo-video")
+  const legacyPromo = galleryItems.find((item) => item.postKind === "promo-video")
+  const promoVideo = settings.promoVideo?.url ? {
+    ...settings.promoVideo,
+    embedUrl: getEmbedUrl(settings.promoVideo.url),
+    videoPlatform: getVideoPlatform(settings.promoVideo.url),
+    videoLayout: settings.promoVideo.layout,
+  } : settings.hasPublishedSettings ? null : legacyPromo
   const visibleGallery = galleryItems.filter((item) => item.postKind !== "promo-video").slice(0, 10)
   const isPortraitPromo = promoVideo?.videoLayout === "portrait"
-  const canEmbedPromo = Boolean(promoVideo?.embedUrl) && promoVideo?.videoPlatform !== "facebook"
+  const canEmbedPromo = Boolean(promoVideo?.embedUrl) && promoVideo?.videoPlatform === "youtube"
 
   // Fallback or dynamic content values
-  const heroTag = settings?.heroTag || "ওঁ তৎ সৎ"
-  const heroTitle = settings?.heroTitle || "সার্বজনীন পূজা উদযাপন পরিষদ, রুয়েট"
-  const heroSubtitle = settings?.heroSubtitle || "রুয়েটের সনাতন ধর্মাবলম্বীদের আস্থার সংঘঠন যা বিভিন্ন পূজা-পার্বণ, ধর্মীয় উৎসব যথাযথ মর্যাদায় পালন করে"
-  const heroBgImage = settings?.heroBgImage || "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999776/hero_qytbzo.jpg"
-  
-  const fallbackImg1 = settings?.fallbackImg1 || "https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-meditation-cave-peaceful_c9hc1o.jpg"
-  const fallbackImg2 = settings?.fallbackImg2 || "https://res.cloudinary.com/djt70cy8p/image/upload/v1769127833/IMG_0834_azjooq.jpg"
+  const { heroTag, heroTitle, heroSubtitle, heroBgImage, fallbackImg1, fallbackImg2 } = settings
 
   return (
     <div className="min-h-screen bg-white">

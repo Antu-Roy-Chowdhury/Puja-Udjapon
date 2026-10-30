@@ -11,9 +11,9 @@ export async function getEvents(limit?: number) {
       getHiddenGoogleEventIds(),
     ])
     const manualEvents = manualRows
-      .filter((event) => event.title !== "__HIDDEN_GOOGLE_EVENT__")
+      .filter((event: Record<string, any>) => event.title !== "__HIDDEN_GOOGLE_EVENT__")
       .map((event) => ({ ...normalizeEvent(event), source: "manual", editable: true, google_event_id: null }))
-    const visibleGoogleEvents = googleEvents.filter((event) => !hiddenGoogleEventIds.has(event.google_event_id))
+    const visibleGoogleEvents = googleEvents.filter((event: { google_event_id: string }) => !hiddenGoogleEventIds.has(event.google_event_id))
     const merged = [...visibleGoogleEvents, ...manualEvents]
       .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
     return typeof limit === "number" ? merged.slice(0, limit) : merged

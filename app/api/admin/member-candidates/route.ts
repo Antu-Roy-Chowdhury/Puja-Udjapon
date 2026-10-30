@@ -12,8 +12,8 @@ export async function GET(req: Request) {
     const search = searchParams.get("search")?.trim() || ""
     const rows = await getDatabase()`
       SELECT m.id, m.name, m.department, m.series, m.email, m.phone, m.avatar, m.position
-      FROM members m
-      WHERE m.profile_id IS NOT NULL
+      FROM members m LEFT JOIN profiles p ON p.id = m.profile_id
+      WHERE (m.profile_id IS NULL OR p.approved = TRUE)
         AND (${department} = '' OR m.department = ${department})
         AND (${series} = '' OR m.series = ${series})
         AND (${search} = '' OR m.name ILIKE ${`%${search}%`} OR m.email ILIKE ${`%${search}%`})

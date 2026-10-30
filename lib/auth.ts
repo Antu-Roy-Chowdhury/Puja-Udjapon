@@ -132,7 +132,7 @@ export async function requireUser() {
 
 export async function requireRole(roles: UserRole[]) {
   const user = await requireUser()
-  if (!roles.includes(user.role)) throw new AuthorizationError("Forbidden", 403)
+  if (!user.approved || !roles.includes(user.role)) throw new AuthorizationError("Forbidden", 403)
   return user
 }
 

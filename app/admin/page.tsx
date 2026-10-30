@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const coreCards = [
-  { title: "Profile Approvals", description: "Approve pending users and gallery submissions.", href: "/profile?tab=admin", icon: Users },
+  { title: "Profile Approvals", description: "Approve pending users and gallery submissions.", href: "/admin/approvals", icon: Users },
   { title: "Home Page", description: "Submit the homepage promo video with layout control.", href: "/admin/welcome-media", icon: Film },
   { title: "Events", description: "Create and manage manual events and synced calendar items.", href: "/admin/events", icon: Calendar },
   { title: "Activities", description: "Add, edit, and publish community activities.", href: "/admin/activities", icon: ImageIcon },

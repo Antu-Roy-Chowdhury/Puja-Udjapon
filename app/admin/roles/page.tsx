@@ -26,7 +26,7 @@ export default function AdminRolesPage() {
 
   useEffect(() => {
     if (!user || user.role !== "super_admin") return
-    fetch("/api/admin/all-users", { headers: { "x-user-role": user.role } })
+    fetch("/api/admin/all-users")
       .then((res) => res.json())
       .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch((error) => console.error("[v0] Failed to load role users:", error))
@@ -49,7 +49,7 @@ export default function AdminRolesPage() {
     toast({ title: "User role updated" })
   }
 
-  const isBlocked = Boolean(user) && user.role !== "super_admin"
+  const isBlocked = Boolean(user && user.role !== "super_admin")
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

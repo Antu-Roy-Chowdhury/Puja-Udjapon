@@ -92,7 +92,7 @@ export default function GalleryPage() {
           "Content-Type": "application/json",
           "x-user-role": user.role,
         },
-        body: JSON.stringify({ id: item.id }),
+        body: JSON.stringify({ id: item.id, removeApproved: true }),
       })
 
       const data = await res.json()

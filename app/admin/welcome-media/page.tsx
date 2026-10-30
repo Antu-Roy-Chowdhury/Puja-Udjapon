@@ -1,7 +1,6 @@
 ﻿"use client"
 
-import { useState } from "react"
-import { useAuth } from "@/components/auth-provider"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,22 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { uploadToCloudinary } from "@/lib/cloudinaryUpload"
-import { getEmbedUrl, getVideoThumbnail } from "@/lib/content"
+import { getEmbedUrl, getVideoPlatform } from "@/lib/content"
+import { defaultHomepage } from "@/lib/homepage"
 import { Play, ExternalLink, Eye } from "lucide-react"
 
 export default function AdminHomePageConfigPage() {
-  const { user } = useAuth()
   const { toast } = useToast()
   
   // Hero Section State
-  const [heroTitle, setHeroTitle] = useState("সার্বজনীন পূজা উদযাপন পরিষদ, রুয়েট")
-  const [heroSubtitle, setHeroSubtitle] = useState("রুয়েটের সনাতন ধর্মাবলম্বীদের আস্থার সংঘঠন যা বিভিন্ন পূজা-পার্বণ, ধর্মীয় উৎসব যথাযথ মর্যাদায় পালন করে")
-  const [heroTag, setHeroTag] = useState("ওঁ তৎ সৎ")
-  const [heroBgImage, setHeroBgImage] = useState("https://res.cloudinary.com/djt70cy8p/image/upload/v1768999776/hero_qytbzo.jpg")
+  const [heroTitle, setHeroTitle] = useState(defaultHomepage.heroTitle)
+  const [heroSubtitle, setHeroSubtitle] = useState(defaultHomepage.heroSubtitle)
+  const [heroTag, setHeroTag] = useState(defaultHomepage.heroTag)
+  const [heroBgImage, setHeroBgImage] = useState(defaultHomepage.heroBgImage)
   
   // Welcome Fallback Images State
-  const [fallbackImg1, setFallbackImg1] = useState("https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-meditation-cave-peaceful_c9hc1o.jpg")
-  const [fallbackImg2, setFallbackImg2] = useState("https://res.cloudinary.com/djt70cy8p/image/upload/v1769127833/IMG_0834_azjooq.jpg")
+  const [fallbackImg1, setFallbackImg1] = useState(defaultHomepage.fallbackImg1)
+  const [fallbackImg2, setFallbackImg2] = useState(defaultHomepage.fallbackImg2)
 
   // Promo Video State
   const [videoTitle, setVideoTitle] = useState("Welcome Promo Video")
@@ -37,6 +36,23 @@ export default function AdminHomePageConfigPage() {
   const [uploadingImg1, setUploadingImg1] = useState(false)
   const [uploadingImg2, setUploadingImg2] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/settings/homepage?draft=1", { cache: "no-store" })
+      .then(async (res) => { const data = await res.json(); if (!res.ok) throw new Error(data.error); return data })
+      .then(({ settings, legacyPromo }) => {
+        setHeroTitle(settings.heroTitle); setHeroSubtitle(settings.heroSubtitle); setHeroTag(settings.heroTag)
+        setHeroBgImage(settings.heroBgImage); setFallbackImg1(settings.fallbackImg1); setFallbackImg2(settings.fallbackImg2)
+        const promo = settings.promoVideo || legacyPromo
+        setVideoTitle(promo?.title || "Welcome Promo Video")
+        setVideoDescription(promo?.description || "")
+        setVideoUrl(promo?.url || "")
+        setVideoLayout(promo?.layout || promo?.videoLayout || "auto")
+      })
+      .catch((error) => toast({ title: "Unable to load homepage content", description: String(error), variant: "destructive" }))
+      .finally(() => setLoading(false))
+  }, [])
 
   // Handlers for cloudinary image updates (using valid CloudinaryFolder types)
   const handleBgUpload = async (file?: File | null) => {
@@ -81,10 +97,11 @@ export default function AdminHomePageConfigPage() {
     }
   }
 
-  const handleSaveAll = async () => {
+  const handleSaveAll = async (mode: "save" | "publish") => {
     setSaving(true)
     try {
       const payload = {
+        mode,
         heroTitle,
         heroSubtitle,
         heroTag,
@@ -96,8 +113,6 @@ export default function AdminHomePageConfigPage() {
           url: videoUrl,
           description: videoDescription,
           layout: videoLayout,
-          thumbnail: getVideoThumbnail(videoUrl),
-          embedUrl: getEmbedUrl(videoUrl, true),
         } : null
       }
 
@@ -107,28 +122,8 @@ export default function AdminHomePageConfigPage() {
         body: JSON.stringify(payload),
       })
 
-      if (!res.ok) throw new Error("Failed to save home page settings")
-
-      if (videoUrl && getEmbedUrl(videoUrl)) {
-        await fetch("/api/gallery/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: videoTitle,
-            type: "video",
-            url: videoUrl,
-            thumbnail: getVideoThumbnail(videoUrl),
-            uploadedBy: user?.email ?? "",
-            description: videoDescription,
-            tags: ["promo-video", "welcome"],
-            embedUrl: getEmbedUrl(videoUrl, true),
-            postKind: "promo-video",
-            videoLayout,
-          }),
-        })
-      }
-
-      toast({ title: "Home Page Updated!", description: "All changes are now live on the home page." })
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Failed to save home page settings") }
+      toast({ title: mode === "publish" ? "Home Page Published" : "Draft Saved" })
     } catch (error) {
       toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to save settings", variant: "destructive" })
     } finally {
@@ -146,9 +141,7 @@ export default function AdminHomePageConfigPage() {
             <h1 className="text-2xl font-bold font-serif text-gray-900">Manage Home Page Content & Preview</h1>
             <p className="text-sm text-gray-600 mt-1">Customize hero copy, background imagery, and see changes live on the right sidebar.</p>
           </div>
-          <Button onClick={handleSaveAll} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 shadow-sm">
-            {saving ? "Publishing..." : "Publish All Changes"}
-          </Button>
+          <div className="flex gap-2"><Button variant="outline" onClick={() => handleSaveAll("save")} disabled={saving || loading}>Save Draft</Button><Button onClick={() => handleSaveAll("publish")} disabled={saving || loading} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 shadow-sm">{saving ? "Saving..." : "Publish All Changes"}</Button></div>
         </div>
 
         {/* Main Split Layout: Form Editor (Left) & Live Preview (Right) */}
@@ -269,9 +262,9 @@ export default function AdminHomePageConfigPage() {
 
                 {/* Media Preview Box */}
                 <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-3 min-h-[200px] flex items-center justify-center">
-                  {videoUrl && getEmbedUrl(videoUrl) && videoLayout !== "portrait" ? (
-                    <div className="w-full aspect-video rounded-xl overflow-hidden bg-black flex items-center justify-center text-white text-xs">
-                      [Embedded Video Preview Active]
+                  {videoUrl && getVideoPlatform(videoUrl) === "youtube" ? (
+                    <div className={`w-full ${videoLayout === "portrait" ? "h-64" : "aspect-video"} rounded-xl overflow-hidden bg-black flex items-center justify-center text-white text-xs`}>
+                      <iframe src={getEmbedUrl(videoUrl)} className="w-full h-full" title={videoTitle} allowFullScreen />
                     </div>
                   ) : videoUrl ? (
                     <div className="relative w-full overflow-hidden rounded-xl bg-orange-50 p-4 text-center space-y-2">

@@ -15,6 +15,7 @@ type Member = {
   id: string; name: string; position: string; department?: string; series?: string
   email?: string; phone?: string; avatar?: string; bio?: string; isAlumni?: boolean
   display_order?: number
+  developerDesignation?: string | null
 }
 type CommitteeSummary = { id: string; year: number; title: string; description?: string }
 type Committee = CommitteeSummary & { members: Member[] }
@@ -257,6 +258,7 @@ function MemberCard({ member }: { member: Member }) {
           </Avatar>
           <div className="min-w-0 space-y-0.5">
             <h3 className="font-bold text-gray-900 truncate text-base">{member.name}</h3>
+            {member.developerDesignation && <Badge variant="outline" className="text-orange-700 border-orange-200">Developer</Badge>}
             <p className="text-xs font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md inline-block">
               {member.position}
             </p>

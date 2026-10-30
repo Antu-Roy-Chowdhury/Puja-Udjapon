@@ -6,15 +6,17 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const requestedYear = Number(searchParams.get("year"))
     const sql = getDatabase()
-    const committees = await sql`SELECT id, year, title, description, created_at FROM committees ORDER BY year DESC`
+    const committees = await sql`SELECT id, year, title, description, term_start, term_end, created_at FROM committees ORDER BY year DESC`
     const selected = Number.isInteger(requestedYear)
       ? committees.find((committee) => Number(committee.year) === requestedYear)
-      : committees[0]
+      : committees.find((committee) => committee.term_start && committee.term_end && new Date(committee.term_start) <= new Date() && new Date(committee.term_end) >= new Date()) || committees[0]
     if (!selected) return NextResponse.json({ committees, committee: null })
     const members = await sql`
       SELECT cm.id AS committee_member_id, cm.position, cm.display_order,
-        m.id, m.name, m.department, m.series, m.email, m.phone, m.avatar, m.bio
+        m.id, m.name, m.department, m.series, m.email, m.phone, m.avatar, m.bio,
+        d.designation AS "developerDesignation"
       FROM committee_members cm JOIN members m ON m.id = cm.member_id
+      LEFT JOIN developer_profiles d ON d.profile_id = m.profile_id
       WHERE cm.committee_id = ${selected.id}
       ORDER BY cm.display_order ASC, cm.position ASC, m.name ASC
     `
