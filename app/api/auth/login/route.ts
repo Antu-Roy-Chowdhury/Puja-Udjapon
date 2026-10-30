@@ -1,75 +1,58 @@
+import bcrypt from "bcryptjs"
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+import { createSession } from "@/lib/auth"
+import { getDatabase } from "@/lib/db"
 
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json()
-    console.log("[v0] Login attempt for:", email)
-
-    const { data: authData, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error || !authData.user) {
-      console.error("[v0] Auth error:", error?.message)
-      return NextResponse.json(
-        { status: "INVALID", error: "Invalid email or password" },
-        { status: 401 },
-      )
+    if (!email || !password) {
+      return NextResponse.json({ status: "INVALID", error: "Email and password are required" }, { status: 400 })
     }
 
-    const userId = authData.user.id
+    const sql = getDatabase()
+    const rows = await sql`
+      SELECT u.id, u.email, u.password_hash, p.name, p.role, p.approved,
+        p.department, p.series, p.photo, p.contact, p.blood_group, p.bio
+      FROM users u
+      JOIN profiles p ON p.id = u.id
+      WHERE LOWER(u.email) = LOWER(${String(email).trim()})
+      LIMIT 1
+    `
+    const account = rows[0] as Record<string, any> | undefined
+    const passwordMatches = account?.password_hash
+      ? await bcrypt.compare(String(password), account.password_hash)
+      : false
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single()
-
-    if (profileError || !profile) {
-      console.error("[v0] Profile error:", profileError?.message)
-      return NextResponse.json(
-        { status: "INVALID", error: "User profile not found" },
-        { status: 401 },
-      )
+    if (!account || !passwordMatches) {
+      return NextResponse.json({ status: "INVALID", error: "Invalid email or password" }, { status: 401 })
+    }
+    if (!account.approved) {
+      return NextResponse.json({ status: "PENDING", error: "Your account is pending admin approval" })
     }
 
-    const isApproved = Boolean(profile.approved ?? profile.isApproved)
-
-    if (!isApproved) {
-      return NextResponse.json({
-        status: "PENDING",
-        error: "Your account is pending admin approval",
-      })
-    }
-
-    const metadata = authData.user.user_metadata || {}
-    const mergedUser = {
-      ...profile,
-      approved: isApproved,
-      isApproved,
-      contact: metadata.contact || "",
-      bloodGroup: metadata.bloodGroup || "",
-      bio: metadata.bio || "",
-      photo: profile.photo || metadata.photo || "",
-    }
-
-    console.log("[v0] Login successful for:", email)
+    await createSession(account.id)
+    const approved = Boolean(account.approved)
     return NextResponse.json({
       status: "OK",
-      user: mergedUser,
+      user: {
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        role: account.role,
+        approved,
+        isApproved: approved,
+        department: account.department || "",
+        series: account.series || "",
+        photo: account.photo || "",
+        contact: account.contact || "",
+        bloodGroup: account.blood_group || "",
+        bio: account.bio || "",
+      },
     })
   } catch (error) {
-    console.error("[v0] Login endpoint error:", error)
-    return NextResponse.json(
-      { status: "INVALID", error: "An error occurred during login" },
-      { status: 500 },
-    )
+    console.error("Login failed", error)
+    return NextResponse.json({ status: "INVALID", error: "An error occurred during login" }, { status: 500 })
   }
 }

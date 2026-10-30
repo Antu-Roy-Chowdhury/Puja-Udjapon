@@ -1,86 +1,303 @@
 ﻿"use client"
 
 import { useState } from "react"
-
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { uploadToCloudinary } from "@/lib/cloudinaryUpload"
 import { getEmbedUrl, getVideoThumbnail } from "@/lib/content"
+import { Play, ExternalLink, Eye } from "lucide-react"
 
-export default function AdminWelcomeMediaPage() {
+export default function AdminHomePageConfigPage() {
   const { user } = useAuth()
   const { toast } = useToast()
-  const [title, setTitle] = useState("Welcome Promo Video")
-  const [description, setDescription] = useState("")
-  const [url, setUrl] = useState("")
-  const [layout, setLayout] = useState<"auto" | "portrait" | "landscape">("auto")
+  
+  // Hero Section State
+  const [heroTitle, setHeroTitle] = useState("সার্বজনীন পূজা উদযাপন পরিষদ, রুয়েট")
+  const [heroSubtitle, setHeroSubtitle] = useState("রুয়েটের সনাতন ধর্মাবলম্বীদের আস্থার সংঘঠন যা বিভিন্ন পূজা-পার্বণ, ধর্মীয় উৎসব যথাযথ মর্যাদায় পালন করে")
+  const [heroTag, setHeroTag] = useState("ওঁ তৎ সৎ")
+  const [heroBgImage, setHeroBgImage] = useState("https://res.cloudinary.com/djt70cy8p/image/upload/v1768999776/hero_qytbzo.jpg")
+  
+  // Welcome Fallback Images State
+  const [fallbackImg1, setFallbackImg1] = useState("https://res.cloudinary.com/djt70cy8p/image/upload/v1768999779/buddhist-meditation-cave-peaceful_c9hc1o.jpg")
+  const [fallbackImg2, setFallbackImg2] = useState("https://res.cloudinary.com/djt70cy8p/image/upload/v1769127833/IMG_0834_azjooq.jpg")
+
+  // Promo Video State
+  const [videoTitle, setVideoTitle] = useState("Welcome Promo Video")
+  const [videoDescription, setVideoDescription] = useState("")
+  const [videoUrl, setVideoUrl] = useState("")
+  const [videoLayout, setVideoLayout] = useState<"auto" | "portrait" | "landscape">("auto")
+  
+  const [uploadingBg, setUploadingBg] = useState(false)
+  const [uploadingImg1, setUploadingImg1] = useState(false)
+  const [uploadingImg2, setUploadingImg2] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const handleSubmit = async () => {
-    if (!url || !getEmbedUrl(url)) {
-      toast({ title: "Error", description: "Please provide a valid YouTube or Facebook video link.", variant: "destructive" })
-      return
+  // Handlers for cloudinary image updates (using valid CloudinaryFolder types)
+  const handleBgUpload = async (file?: File | null) => {
+    if (!file) return
+    setUploadingBg(true)
+    try {
+      const url = await uploadToCloudinary(file, "temple/events", "image")
+      setHeroBgImage(url)
+      toast({ title: "Hero background updated successfully" })
+    } catch {
+      toast({ title: "Error", description: "Failed to upload background image", variant: "destructive" })
+    } finally {
+      setUploadingBg(false)
     }
+  }
 
+  const handleImg1Upload = async (file?: File | null) => {
+    if (!file) return
+    setUploadingImg1(true)
+    try {
+      const url = await uploadToCloudinary(file, "temple/activities", "image")
+      setFallbackImg1(url)
+      toast({ title: "Left image updated" })
+    } catch {
+      toast({ title: "Error", description: "Failed to upload image", variant: "destructive" })
+    } finally {
+      setUploadingImg1(false)
+    }
+  }
+
+  const handleImg2Upload = async (file?: File | null) => {
+    if (!file) return
+    setUploadingImg2(true)
+    try {
+      const url = await uploadToCloudinary(file, "temple/activities", "image")
+      setFallbackImg2(url)
+      toast({ title: "Right image updated" })
+    } catch {
+      toast({ title: "Error", description: "Failed to upload image", variant: "destructive" })
+    } finally {
+      setUploadingImg2(false)
+    }
+  }
+
+  const handleSaveAll = async () => {
     setSaving(true)
     try {
-      const res = await fetch("/api/gallery/create", {
+      const payload = {
+        heroTitle,
+        heroSubtitle,
+        heroTag,
+        heroBgImage,
+        fallbackImg1,
+        fallbackImg2,
+        promoVideo: videoUrl ? {
+          title: videoTitle,
+          url: videoUrl,
+          description: videoDescription,
+          layout: videoLayout,
+          thumbnail: getVideoThumbnail(videoUrl),
+          embedUrl: getEmbedUrl(videoUrl, true),
+        } : null
+      }
+
+      const res = await fetch("/api/settings/homepage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          type: "video",
-          url,
-          thumbnail: getVideoThumbnail(url),
-          uploadedBy: user?.email ?? "",
-          description,
-          tags: ["promo-video", "welcome"],
-          embedUrl: getEmbedUrl(url, true),
-          postKind: "promo-video",
-          videoLayout: layout,
-        }),
+        body: JSON.stringify(payload),
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to save promo video")
+      if (!res.ok) throw new Error("Failed to save home page settings")
 
-      toast({ title: "Promo video submitted", description: "Approve it from the gallery moderation panel to show it on the home page and gallery." })
-      setDescription("")
-      setUrl("")
-      setLayout("auto")
+      if (videoUrl && getEmbedUrl(videoUrl)) {
+        await fetch("/api/gallery/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: videoTitle,
+            type: "video",
+            url: videoUrl,
+            thumbnail: getVideoThumbnail(videoUrl),
+            uploadedBy: user?.email ?? "",
+            description: videoDescription,
+            tags: ["promo-video", "welcome"],
+            embedUrl: getEmbedUrl(videoUrl, true),
+            postKind: "promo-video",
+            videoLayout,
+          }),
+        })
+      }
+
+      toast({ title: "Home Page Updated!", description: "All changes are now live on the home page." })
     } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to save promo video", variant: "destructive" })
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to save settings", variant: "destructive" })
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Card>
-          <CardHeader><CardTitle>Welcome Promo Video</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Promo title" />
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Promo description" />
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="YouTube or Facebook video link" />
-            <div>
-              <p className="text-sm font-medium mb-2">Video Layout</p>
-              <Select value={layout} onValueChange={(value: "auto" | "portrait" | "landscape") => setLayout(value)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Auto</SelectItem>
-                  <SelectItem value="portrait">Portrait</SelectItem>
-                  <SelectItem value="landscape">Landscape</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className="min-h-screen bg-gray-50/70 p-6 sm:p-10">
+      <div className="max-w-[90rem] mx-auto space-y-6">
+        
+        {/* Top Header Bar */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold font-serif text-gray-900">Manage Home Page Content & Preview</h1>
+            <p className="text-sm text-gray-600 mt-1">Customize hero copy, background imagery, and see changes live on the right sidebar.</p>
+          </div>
+          <Button onClick={handleSaveAll} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 shadow-sm">
+            {saving ? "Publishing..." : "Publish All Changes"}
+          </Button>
+        </div>
+
+        {/* Main Split Layout: Form Editor (Left) & Live Preview (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: Form Controls (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <CardHeader><CardTitle className="font-serif text-xl">Hero Section Settings</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-800">Top Tag (e.g. ওঁ তৎ সৎ)</label>
+                  <Input value={heroTag} onChange={(e) => setHeroTag(e.target.value)} className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-800">Main Heading Title</label>
+                  <Input value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)} className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-800">Subtitle Description</label>
+                  <Textarea value={heroSubtitle} onChange={(e) => setHeroSubtitle(e.target.value)} className="rounded-xl mt-1" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-800">Hero Background Image</label>
+                  <Input type="file" accept="image/*" onChange={(e) => handleBgUpload(e.target.files?.[0] || null)} disabled={uploadingBg} className="rounded-xl file:bg-orange-50 file:text-orange-700" />
+                  <Input value={heroBgImage} onChange={(e) => setHeroBgImage(e.target.value)} placeholder="Or paste image URL" className="rounded-xl text-xs text-gray-500 mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <CardHeader><CardTitle className="font-serif text-xl">Welcome Fallback Images</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-xs text-gray-500">Displayed side-by-side on the welcome section when no promo video is active.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-800">Left Image</label>
+                    <Input type="file" accept="image/*" onChange={(e) => handleImg1Upload(e.target.files?.[0] || null)} disabled={uploadingImg1} className="rounded-xl text-xs" />
+                    <Input value={fallbackImg1} onChange={(e) => setFallbackImg1(e.target.value)} className="rounded-xl text-xs text-gray-500 mt-1" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-800">Right Image</label>
+                    <Input type="file" accept="image/*" onChange={(e) => handleImg2Upload(e.target.files?.[0] || null)} disabled={uploadingImg2} className="rounded-xl text-xs" />
+                    <Input value={fallbackImg2} onChange={(e) => setFallbackImg2(e.target.value)} className="rounded-xl text-xs text-gray-500 mt-1" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <CardHeader><CardTitle className="font-serif text-xl">Featured Promo Video</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-800">Video Title</label>
+                  <Input value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-800">Video Description Note</label>
+                  <Input value={videoDescription} onChange={(e) => setVideoDescription(e.target.value)} className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-800">Video Link (YouTube / Facebook)</label>
+                  <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Video Layout Aspect</label>
+                  <Select value={videoLayout} onValueChange={(value: "auto" | "portrait" | "landscape") => setVideoLayout(value)}>
+                    <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="auto">Auto</SelectItem>
+                      <SelectItem value="portrait">Portrait</SelectItem>
+                      <SelectItem value="landscape">Landscape</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+
+          {/* Right Column: Sticky Live Preview Sidebar (5 cols) */}
+          <div className="lg:col-span-5 sticky top-6 space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 bg-orange-50 border border-orange-200 px-4 py-2 rounded-xl">
+              <Eye className="w-4 h-4 text-orange-600" />
+              <span>Live Home Page Preview</span>
             </div>
-            <Button onClick={handleSubmit} disabled={saving}>{saving ? "Saving..." : "Submit Promo Video"}</Button>
-          </CardContent>
-        </Card>
+
+            <div className="border border-gray-200 rounded-3xl overflow-hidden bg-white shadow-xl">
+              
+              {/* Preview Hero Section */}
+              <div className="relative h-[320px] flex items-center justify-center overflow-hidden bg-black text-center p-6">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center opacity-70" 
+                  style={{ backgroundImage: `url('${heroBgImage}')` }} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
+                
+                <div className="relative z-10 text-white space-y-3">
+                  <span className="inline-block text-orange-400 text-xs font-medium tracking-widest px-3 py-0.5 rounded-full bg-white/10 border border-white/20">
+                    {heroTag || "ওঁ তৎ সৎ"}
+                  </span>
+                  <h2 className="font-serif text-orange-500 text-2xl sm:text-3xl font-bold leading-tight">
+                    {heroTitle || "Title preview..."}
+                  </h2>
+                  <p className="text-xs text-gray-200 line-clamp-2 max-w-sm mx-auto font-light">
+                    {heroSubtitle || "Subtitle preview..."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Preview Welcome Section */}
+              <div className="p-6 bg-gradient-to-b from-gray-50 to-white space-y-4">
+                <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px]">WELCOME</Badge>
+                <h3 className="font-serif text-xl font-bold text-gray-900">
+                  পূজা, সেবা এবং আধ্যাত্মিক মেলবন্ধনের এক মিলনস্থল
+                </h3>
+
+                {/* Media Preview Box */}
+                <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-3 min-h-[200px] flex items-center justify-center">
+                  {videoUrl && getEmbedUrl(videoUrl) && videoLayout !== "portrait" ? (
+                    <div className="w-full aspect-video rounded-xl overflow-hidden bg-black flex items-center justify-center text-white text-xs">
+                      [Embedded Video Preview Active]
+                    </div>
+                  ) : videoUrl ? (
+                    <div className="relative w-full overflow-hidden rounded-xl bg-orange-50 p-4 text-center space-y-2">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-white shadow flex items-center justify-center text-orange-500">
+                        <Play className="w-4 h-4 fill-orange-500" />
+                      </div>
+                      <p className="text-xs font-semibold text-gray-800">{videoTitle || "Promo Video"}</p>
+                      <span className="text-[10px] text-orange-600 underline inline-flex items-center gap-1">
+                        <ExternalLink className="w-3 h-3" /> External Link Preview
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 w-full">
+                      <img src={fallbackImg1} alt="Fallback 1" className="rounded-lg object-cover w-full h-28 shadow-sm" />
+                      <img src={fallbackImg2} alt="Fallback 2" className="rounded-lg object-cover w-full h-28 shadow-sm mt-4" />
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
   )

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
 
 export interface User {
@@ -32,8 +31,8 @@ interface SignupPayload {
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<"OK" | "PENDING" | "INVALID" | { error: string; status: string }>
-  logout: () => void
+  login: (email: string, password: string) => Promise<"OK" | { error: string; status: "PENDING" | "INVALID" }>
+  logout: () => Promise<void>
   signup: (userData: SignupPayload) => Promise<boolean>
   updateUser: (userData: Partial<User>) => void
   isLoading: boolean
@@ -42,22 +41,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 function normalizeUser(userData: any): User {
-  return {
-    ...userData,
-    approved: Boolean(userData?.approved ?? userData?.isApproved),
-    isApproved: Boolean(userData?.approved ?? userData?.isApproved),
-  }
-}
-
-function persistUser(userData: User | null) {
-  if (!userData) {
-    localStorage.removeItem("auth-token")
-    localStorage.removeItem("user-data")
-    return
-  }
-
-  localStorage.setItem("auth-token", userData.email)
-  localStorage.setItem("user-data", JSON.stringify(userData))
+  const approved = Boolean(userData?.approved ?? userData?.isApproved)
+  return { ...userData, approved, isApproved: approved }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -65,92 +50,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("auth-token")
-    const userDataStr = localStorage.getItem("user-data")
-
-    if (token && userDataStr) {
-      try {
-        const userData = normalizeUser(JSON.parse(userDataStr))
-        setUser(userData)
-      } catch (error) {
-        console.error("[v0] Failed to parse stored user data:", error)
-        persistUser(null)
-      }
-    }
-
-    setIsLoading(false)
+    const controller = new AbortController()
+    fetch("/api/auth/session", { signal: controller.signal, cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => setUser(data.user ? normalizeUser(data.user) : null))
+      .catch((error) => {
+        if (error?.name !== "AbortError") console.error("Failed to restore session", error)
+      })
+      .finally(() => setIsLoading(false))
+    return () => controller.abort()
   }, [])
 
-  const login = async (
-    email: string,
-    password: string,
-  ): Promise<"OK" | "PENDING" | "INVALID" | { error: string; status: string }> => {
+  const login = async (email: string, password: string) => {
     try {
-      const res = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
-
-      const data = await res.json()
-
+      const data = await response.json()
       if (data.status === "PENDING") {
-        return { status: "PENDING", error: data.error || "Account pending approval" }
+        return { status: "PENDING" as const, error: data.error || "Account pending approval" }
       }
-
-      if (data.status !== "OK") {
-        return { status: "INVALID", error: data.error || "Invalid email or password" }
+      if (!response.ok || data.status !== "OK" || !data.user) {
+        return { status: "INVALID" as const, error: data.error || "Invalid email or password" }
       }
-
-      if (data.user) {
-        const normalizedUser = normalizeUser(data.user)
-        setUser(normalizedUser)
-        persistUser(normalizedUser)
-      }
-
-      return "OK"
+      setUser(normalizeUser(data.user))
+      return "OK" as const
     } catch (error) {
-      console.error("[v0] Login error:", error)
-      return { status: "INVALID", error: error instanceof Error ? error.message : "An error occurred" }
+      return { status: "INVALID" as const, error: error instanceof Error ? error.message : "An error occurred" }
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    persistUser(null)
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+    } finally {
+      setUser(null)
+      window.location.assign("/")
+    }
   }
 
   const signup = async (payload: SignupPayload) => {
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || "Signup failed")
-      }
-
-      return true
-    } catch (error) {
-      console.error("[v0] Signup error:", error)
-      throw error
-    }
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || "Signup failed")
+    return true
   }
 
   const updateUser = (userData: Partial<User>) => {
-    setUser((currentUser) => {
-      if (!currentUser) {
-        return currentUser
-      }
-
-      const nextUser = normalizeUser({ ...currentUser, ...userData })
-      persistUser(nextUser)
-      return nextUser
-    })
+    setUser((current) => (current ? normalizeUser({ ...current, ...userData }) : current))
   }
 
   return (
@@ -162,10 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-
+  if (!context) throw new Error("useAuth must be used within an AuthProvider")
   return context
 }

@@ -14,7 +14,7 @@ export async function createDonation(
   donationData: Omit<Donation, "id" | "created_at">
 ): Promise<{ success: boolean; message: string; error?: string }> {
   try {
-    const res = await fetch("/api/donations/create", {
+    const res = await fetch("/api/donation/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(donationData),
@@ -53,7 +53,7 @@ export async function getDonations(
     if (status) params.append("status", status)
     if (limit) params.append("limit", limit.toString())
 
-    const res = await fetch(`/api/donations/list?${params}`)
+    const res = await fetch(`/api/donation/list?${params}`)
     const data = await res.json()
 
     if (!res.ok) {

@@ -1,5 +1,7 @@
 type CloudinaryFolder =
   | "temple/profile"
+  | "temple/hero"
+  | "temple/fallback"
   | "temple/gallery"
   | "temple/events"
   | "temple/activities"

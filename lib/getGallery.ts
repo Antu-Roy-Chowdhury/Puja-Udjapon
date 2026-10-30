@@ -1,32 +1,19 @@
-import { createClient } from "@supabase/supabase-js"
-
-import { getApprovalValue, normalizeGalleryItem } from "@/lib/content"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
+import { normalizeGalleryItem } from "@/lib/content"
+import { getDatabase } from "@/lib/db"
 
 export async function getGallery(limit?: number) {
   try {
-    let query = supabase.from("gallery").select("*").order("created_at", { ascending: false })
-
-    if (limit) {
-      query = query.limit(limit)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error("[v0] Failed to fetch gallery:", error)
-      return []
-    }
-
-    return (data || [])
-      .filter((item) => getApprovalValue(item))
-      .map((item) => normalizeGalleryItem(item, "Community Member"))
+    const sql = getDatabase()
+    const rows = limit
+      ? await sql`SELECT g.*, COALESCE(p.name, p.email, 'Community Member') AS uploader_name
+          FROM gallery g LEFT JOIN profiles p ON p.id = g.uploaded_by
+          WHERE g.approved = TRUE ORDER BY g.created_at DESC LIMIT ${limit}`
+      : await sql`SELECT g.*, COALESCE(p.name, p.email, 'Community Member') AS uploader_name
+          FROM gallery g LEFT JOIN profiles p ON p.id = g.uploaded_by
+          WHERE g.approved = TRUE ORDER BY g.created_at DESC`
+    return rows.map((row) => normalizeGalleryItem(row, String(row.uploader_name)))
   } catch (error) {
-    console.error("[v0] Error in getGallery:", error)
+    console.error("Failed to fetch gallery", error)
     return []
   }
 }

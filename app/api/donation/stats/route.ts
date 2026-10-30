@@ -1,48 +1,29 @@
-﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
-
-function normalizeAmount(value: unknown) {
-  const amount = typeof value === "number" ? value : Number(value)
-  return Number.isFinite(amount) ? amount : 0
-}
+import { apiError } from "@/lib/api-error"
+import { requireRole } from "@/lib/auth"
+import { getDatabase } from "@/lib/db"
 
 export async function GET() {
   try {
-    const { data: donations, error } = await supabase.from("donations").select("*").order("created_at", { ascending: false })
-
-    if (error) throw error
-
-    const normalizedDonations = (donations || []).map((donation) => ({
-      ...donation,
-      amount: normalizeAmount(donation.amount),
-    }))
-
-    const totalAmount = normalizedDonations.reduce((sum, donation) => sum + donation.amount, 0)
-
-    const stats = {
-      totalDonations: normalizedDonations.length,
-      totalAmount,
-      averageDonation: normalizedDonations.length > 0 ? Number((totalAmount / normalizedDonations.length).toFixed(2)) : 0,
-      donations: normalizedDonations,
-      statusBreakdown: {
-        pending: normalizedDonations.filter((donation) => donation.status === "pending").length,
-        completed: normalizedDonations.filter((donation) => donation.status === "completed").length,
-        failed: normalizedDonations.filter((donation) => donation.status === "failed").length,
-      },
-    }
-
-    return NextResponse.json(stats)
+    await requireRole(["super_admin"])
+    const rows = await getDatabase()`
+      SELECT COUNT(*)::integer AS total_donations,
+        COALESCE(SUM(amount), 0)::float8 AS total_amount,
+        COALESCE(AVG(amount), 0)::float8 AS average_donation,
+        COUNT(*) FILTER (WHERE status = 'pending')::integer AS pending,
+        COUNT(*) FILTER (WHERE status = 'completed')::integer AS completed,
+        COUNT(*) FILTER (WHERE status = 'failed')::integer AS failed
+      FROM donations
+    `
+    const stats = rows[0]
+    return NextResponse.json({
+      totalDonations: stats.total_donations,
+      totalAmount: Number(stats.total_amount),
+      averageDonation: Number(Number(stats.average_donation).toFixed(2)),
+      statusBreakdown: { pending: stats.pending, completed: stats.completed, failed: stats.failed },
+    })
   } catch (error) {
-    console.error("[v0] Donation stats error:", error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch donation statistics" },
-      { status: 500 },
-    )
+    console.error("Donation stats failed", error)
+    return apiError(error, "Failed to fetch donation statistics")
   }
 }
-

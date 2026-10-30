@@ -1,37 +1,20 @@
-﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-
+import { apiError } from "@/lib/api-error"
+import { requireRole, requireUser } from "@/lib/auth"
 import { encodeGalleryDescription, getVideoThumbnail } from "@/lib/content"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+import { getDatabase } from "@/lib/db"
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const {
-      title,
-      type,
-      url,
-      thumbnail = "",
-      uploadedBy,
-      description = "",
-      tags = [],
-      albumUrls = [],
-      embedUrl = "",
-      postKind = "gallery",
-      videoLayout = "auto",
-    } = body
-
-    if (!url) {
-      return NextResponse.json({ error: "A media URL is required" }, { status: 400 })
+    const user = body.postKind === "promo-video"
+      ? await requireRole(["admin", "super_admin"])
+      : await requireUser()
+    const { title, type, url, thumbnail = "", description = "", tags = [], albumUrls = [], embedUrl = "", postKind = "gallery", videoLayout = "auto" } = body
+    if (!url || !title || !["image", "video"].includes(type)) {
+      return NextResponse.json({ error: "A title and valid media URL are required" }, { status: 400 })
     }
-
-    const { data: profile } = await supabase.from("profiles").select("id").eq("email", uploadedBy).single()
-
-    const safeTags = Array.isArray(tags) ? tags : []
+    const safeTags = Array.isArray(tags) ? tags.map(String) : []
     const computedThumbnail = thumbnail || (type === "video" ? getVideoThumbnail(url) : url)
     const descriptionPayload = encodeGalleryDescription({
       text: description,
@@ -40,32 +23,13 @@ export async function POST(req: Request) {
       postKind,
       videoLayout,
     })
-
-    const insertPayload = {
-      id: crypto.randomUUID(),
-      title,
-      type,
-      url,
-      thumbnail: computedThumbnail,
-      uploaded_by: profile?.id || null,
-      description: descriptionPayload,
-      tags: safeTags,
-    }
-
-    let insertResult = await supabase.from("gallery").insert({ ...insertPayload, approved: false })
-
-    if (insertResult.error) {
-      insertResult = await supabase.from("gallery").insert({ ...insertPayload, isApproved: false })
-    }
-
-    if (insertResult.error) {
-      console.error("[v0] Supabase error:", insertResult.error)
-      return NextResponse.json({ error: insertResult.error.message || "Failed to create gallery item" }, { status: 500 })
-    }
-
+    await getDatabase()`
+      INSERT INTO gallery (title, type, url, thumbnail, uploaded_by, approved, description, tags)
+      VALUES (${title}, ${type}, ${url}, ${computedThumbnail}, ${user.id}, FALSE, ${descriptionPayload}, ${safeTags})
+    `
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Gallery create error:", error)
-    return NextResponse.json({ error: "An error occurred" }, { status: 500 })
+    console.error("Gallery create failed", error)
+    return apiError(error, "Failed to create gallery item")
   }
 }

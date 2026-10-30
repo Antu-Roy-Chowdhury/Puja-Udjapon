@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const coreCards = [
   { title: "Profile Approvals", description: "Approve pending users and gallery submissions.", href: "/profile?tab=admin", icon: Users },
+  { title: "Home Page", description: "Submit the homepage promo video with layout control.", href: "/admin/welcome-media", icon: Film },
   { title: "Events", description: "Create and manage manual events and synced calendar items.", href: "/admin/events", icon: Calendar },
-  { title: "Activities", description: "Add, edit, and delete activities from Supabase.", href: "/admin/activities", icon: ImageIcon },
-  { title: "Welcome Media", description: "Submit the homepage promo video with layout control.", href: "/admin/welcome-media", icon: Film },
+  { title: "Activities", description: "Add, edit, and publish community activities.", href: "/admin/activities", icon: ImageIcon },
 ]
 
 const superAdminCards = [

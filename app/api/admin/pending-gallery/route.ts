@@ -1,43 +1,20 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { apiError } from "@/lib/api-error"
+import { requireAdmin } from "@/lib/auth"
+import { normalizeGalleryItem } from "@/lib/content"
+import { getDatabase } from "@/lib/db"
 
-import { getApprovalValue, normalizeGalleryItem } from "@/lib/content"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
-
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const userRole = req.headers.get("x-user-role")
-
-    if (userRole !== "admin" && userRole !== "super_admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-    }
-
-    const { data: galleryItems, error } = await supabase
-      .from("gallery")
-      .select("*")
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch pending gallery items" }, { status: 500 })
-    }
-
-    const pendingItems = (galleryItems || []).filter((item) => !getApprovalValue(item))
-    const uploaderIds = pendingItems.map((item) => item.uploaded_by).filter(Boolean)
-    const { data: profiles } = uploaderIds.length
-      ? await supabase.from("profiles").select("id, name, email").in("id", uploaderIds)
-      : { data: [] as any[] }
-
-    const profileMap = new Map((profiles || []).map((profile) => [profile.id, profile.name || profile.email]))
-
-    return NextResponse.json(
-      pendingItems.map((item) => normalizeGalleryItem(item, profileMap.get(item.uploaded_by) || "Community Member")),
-    )
+    await requireAdmin()
+    const rows = await getDatabase()`
+      SELECT g.*, COALESCE(p.name, p.email, 'Community Member') AS uploader_name
+      FROM gallery g LEFT JOIN profiles p ON p.id = g.uploaded_by
+      WHERE g.approved = FALSE ORDER BY g.created_at DESC
+    `
+    return NextResponse.json(rows.map((row) => normalizeGalleryItem(row, String(row.uploader_name))))
   } catch (error) {
-    console.error("[v0] Pending gallery endpoint error:", error)
-    return NextResponse.json({ error: "An error occurred" }, { status: 500 })
+    console.error("Pending gallery query failed", error)
+    return apiError(error, "Failed to fetch pending gallery items")
   }
 }

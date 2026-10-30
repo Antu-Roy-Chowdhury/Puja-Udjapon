@@ -1,13 +1,14 @@
 ﻿"use client"
 
 import { useEffect, useState } from "react"
-import { Calendar, Edit, Plus, Trash2 } from "lucide-react"
+import { Calendar, Edit, Plus, Trash2, MapPin, Clock, Image as ImageIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { uploadToCloudinary } from "@/lib/cloudinaryUpload"
 
@@ -94,7 +95,7 @@ export default function AdminEventsPage() {
       if (!res.ok) {
         throw new Error(data.error || "Failed to save event")
       }
-      toast({ title: formData.id ? "Event updated" : "Event created" })
+      toast({ title: formData.id ? "Event updated successfully" : "Event created successfully" })
       setFormData(emptyForm)
       setOpenDialog(false)
       await fetchEvents()
@@ -138,56 +139,63 @@ export default function AdminEventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-gray-50/70 p-6 sm:p-10">
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>
-            <h1 className="text-3xl font-bold">Manage Events</h1>
-            <p className="text-gray-600 mt-2">Google Calendar events sync automatically. Admin-created events stay editable here.</p>
+            <h1 className="text-3xl font-bold font-serif text-gray-900">Manage Events</h1>
+            <p className="text-gray-600 mt-1 text-sm">Google Calendar events sync automatically. Admin-created events stay fully editable here.</p>
           </div>
           <Dialog open={openDialog} onOpenChange={(open) => {
             setOpenDialog(open)
             if (!open) setFormData(emptyForm)
           }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setFormData(emptyForm)}>
+              <Button onClick={() => setFormData(emptyForm)} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-5 shadow-sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Event
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl rounded-2xl p-6 sm:p-8">
               <DialogHeader>
-                <DialogTitle>{formData.id ? "Edit Event" : "Create New Event"}</DialogTitle>
+                <DialogTitle className="font-serif text-2xl font-bold text-gray-900">
+                  {formData.id ? "Edit Event" : "Create New Event"}
+                </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Title *</label>
-                  <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+              <div className="space-y-5 pt-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-800">Title *</label>
+                  <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter event title" className="rounded-xl border-gray-200" />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Description</label>
-                  <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-800">Description</label>
+                  <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Write event details..." className="rounded-xl border-gray-200 min-h-[100px]" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Event Image</label>
-                  <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files?.[0] || null)} disabled={uploadingImage} />
-                  <Input value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} placeholder="Or paste an image URL" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Start Date *</label>
-                    <Input type="datetime-local" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} />
+                  <label className="text-sm font-semibold text-gray-800">Event Image</label>
+                  <span className="text-xs text-gray-500"> Recommended: 1200 × 630px (Landscape)</span>
+                  <div className="flex flex-col sm:flex-row gap-3 items-center">
+                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files?.[0] || null)} disabled={uploadingImage} className="rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">End Date *</label>
-                    <Input type="datetime-local" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} />
+                  <Input value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} placeholder="Or paste an image URL here" className="rounded-xl border-gray-200 mt-2" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Start Date & Time *</label>
+                    <Input type="datetime-local" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="rounded-xl border-gray-200" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">End Date & Time *</label>
+                    <Input type="datetime-local" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} className="rounded-xl border-gray-200" />
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Location</label>
-                  <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-800">Location</label>
+                  <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Enter event venue or location" className="rounded-xl border-gray-200" />
                 </div>
-                <Button onClick={handleSubmit} className="w-full" disabled={uploadingImage}>
+                <Button onClick={handleSubmit} className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full py-6 font-medium shadow-md mt-2" disabled={uploadingImage}>
                   {formData.id ? "Update Event" : "Create Event"}
                 </Button>
               </div>
@@ -195,45 +203,66 @@ export default function AdminEventsPage() {
           </Dialog>
         </div>
 
+        {/* Events Content List */}
         {loading ? (
-          <div className="text-center py-12">Loading events...</div>
+          <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-2xl border border-gray-100 shadow-sm">Loading events...</div>
         ) : events.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">No events available.</p>
+          <Card className="rounded-2xl border-gray-100 shadow-sm bg-white">
+            <CardContent className="text-center py-16">
+              <Calendar className="w-14 h-14 mx-auto text-orange-400 mb-4 stroke-[1.5]" />
+              <p className="text-gray-800 font-semibold text-lg">No events available.</p>
+              <p className="text-gray-500 text-sm mt-1">Create a new event or sync with calendar to see them here.</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-6">
             {events.map((event) => (
-              <Card key={event.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <CardTitle>{event.title}</CardTitle>
-                      <div className="flex gap-3 mt-2 text-sm text-gray-600 flex-wrap">
-                        <span>{new Date(event.start_time).toLocaleDateString()}</span>
-                        <span>{event.time}</span>
-                        <span>{event.location || "Location pending"}</span>
-                        <span className="font-medium">{event.source === "google" ? "Google Calendar" : "Admin event"}</span>
+              <Card key={event.id} className="rounded-2xl border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white overflow-hidden">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CardTitle className="font-serif text-xl font-bold text-gray-900">{event.title}</CardTitle>
+                        <Badge variant="outline" className={event.source === "google" ? "bg-blue-50 text-blue-700 border-blue-200 font-medium" : "bg-orange-50 text-orange-700 border-orange-200 font-medium"}>
+                          {event.source === "google" ? "Google Calendar" : "Admin Event"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-700 flex-wrap pt-1 font-medium">
+                        <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                          <Calendar className="w-4 h-4 text-orange-500" />
+                          <span>{event.start_time ? new Date(event.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Date pending"}</span>
+                        </div>
+                        {event.time && (
+                          <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                            <Clock className="w-4 h-4 text-orange-500" />
+                            <span>{event.time}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                          <MapPin className="w-4 h-4 text-orange-500" />
+                          <span>{event.location || "Location pending"}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 self-start">
                       {event.editable && (
-                        <Button variant="outline" size="sm" onClick={() => startEdit(event)}>
+                        <Button variant="outline" size="sm" onClick={() => startEdit(event)} className="rounded-xl border-gray-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200">
                           <Edit className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(event)}>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(event)} className="rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 shadow-none">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {event.image_url && <img src={event.image_url} alt={event.title} className="w-full h-56 object-cover rounded-md border" />}
-                  <p className="text-gray-600">{event.description || "No description added yet."}</p>
+                <CardContent className="space-y-4 pt-0">
+                  {event.image_url && (
+                    <div className="relative w-full h-64 rounded-xl overflow-hidden border border-gray-100">
+                      <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <p className="text-gray-700 text-base leading-relaxed font-light">{event.description || "No description added yet."}</p>
                 </CardContent>
               </Card>
             ))}

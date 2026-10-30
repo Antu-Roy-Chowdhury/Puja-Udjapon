@@ -78,7 +78,7 @@ export function Navigation() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild><Link href="/profile" className="flex items-center space-x-2"><User className="w-4 h-4" /><span>My Profile</span></Link></DropdownMenuItem>
                     {(user.role === "admin" || user.role === "super_admin") && <DropdownMenuItem asChild><Link href="/admin" className="flex items-center space-x-2"><Settings className="w-4 h-4" /><span>Admin Dashboard</span></Link></DropdownMenuItem>}
-                    <DropdownMenuItem onClick={logout} className="flex items-center space-x-2"><LogOut className="w-4 h-4" /><span>Logout</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void logout()} className="flex items-center space-x-2"><LogOut className="w-4 h-4" /><span>Logout</span></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
@@ -96,7 +96,7 @@ export function Navigation() {
       {menuOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-          <div ref={menuRef} className="fixed top-0 right-0 w-1/2 h-screen bg-white shadow-lg p-6 space-y-6 transform transition-transform duration-300 ease-in-out translate-x-0" role="dialog" aria-modal="true">
+          <div ref={menuRef} className="fixed top-0 right-0 w-[min(90vw,22rem)] h-screen bg-white shadow-lg p-6 space-y-6 transform transition-transform duration-300 ease-in-out translate-x-0" role="dialog" aria-modal="true">
             <button onClick={() => setMenuOpen(false)} className="absolute top-4 right-4 text-gray-600 hover:text-red-600" aria-label="Close menu"><X className="w-6 h-6" /></button>
             <nav className="flex flex-col gap-4 text-lg">
               <Link href="/" className={`hover:text-primary ${pathname === "/" ? "text-primary border-b-2 p-1 border-primary font-semibold" : "text-gray-700"}`}>Home</Link>
@@ -110,7 +110,7 @@ export function Navigation() {
                   <Button asChild className="bg-primary hover:bg-primary/90"><Link href="/donate">Donate Now</Link></Button>
                   <Button asChild variant="outline"><Link href="/profile">My Profile</Link></Button>
                   {(user.role === "admin" || user.role === "super_admin") && <Button asChild variant="outline"><Link href="/admin">Admin Dashboard</Link></Button>}
-                  <Button asChild variant="destructive" onClick={() => { logout(); setMenuOpen(false) }}>Logout</Button>
+                  <Button variant="destructive" onClick={() => { setMenuOpen(false); void logout() }}>Logout</Button>
                 </>
               ) : (
                 <>

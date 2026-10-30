@@ -1,58 +1,21 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { apiError } from "@/lib/api-error"
+import { requireAdmin } from "@/lib/auth"
+import { getDatabase } from "@/lib/db"
 
 export async function POST(req: Request) {
   try {
-    const userRole = req.headers.get("x-user-role")
+    await requireAdmin()
     const { targetEmail } = await req.json()
-
-    // Only admin and super_admin can reject
-    if (userRole !== "admin" && userRole !== "super_admin") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      )
-    }
-
-    // Fetch the user to reject
-    const { data: profile, error: fetchError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", targetEmail)
-      .single()
-
-    if (fetchError || !profile) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
-    }
-
-    // Delete from auth and profiles (cascade will handle it)
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(
-      profile.id
-    )
-
-    if (deleteError && !deleteError.message.includes("not found")) {
-      console.error("[v0] Delete auth user error:", deleteError)
-      return NextResponse.json(
-        { error: "Failed to reject user" },
-        { status: 500 }
-      )
-    }
-
-    console.log(`[v0] User rejected: ${targetEmail}`)
+    const rows = await getDatabase()`
+      DELETE FROM users WHERE id IN (
+        SELECT id FROM profiles WHERE LOWER(email) = LOWER(${targetEmail}) AND approved = FALSE
+      ) RETURNING id
+    `
+    if (!rows[0]) return NextResponse.json({ error: "Pending user not found" }, { status: 404 })
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Reject user endpoint error:", error)
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    )
+    console.error("Reject user failed", error)
+    return apiError(error, "Failed to reject user")
   }
 }

@@ -1,76 +1,44 @@
-﻿import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-
+import { apiError } from "@/lib/api-error"
+import { requireAdmin } from "@/lib/auth"
 import { normalizeEvent } from "@/lib/content"
+import { getDatabase } from "@/lib/db"
+import { toDhakaIso } from "@/lib/dates"
 import { HIDDEN_GOOGLE_EVENT_TITLE } from "@/lib/googleCalendar"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin()
     const { id } = await params
     const { title, description, start_date, end_date, location, image_url } = await req.json()
-
-    const payloads = [
-      { title, description, start_time: start_date, end_time: end_date, location, image_url: image_url || "" },
-      { title, description, start_time: start_date, end_time: end_date, location },
-    ]
-
-    let updated = null
-    let lastError: any = null
-
-    for (const payload of payloads) {
-      const result = await supabase.from("events").update(payload).eq("id", id).select().single()
-      if (!result.error) {
-        updated = result.data
-        lastError = null
-        break
-      }
-      lastError = result.error
-    }
-
-    if (lastError) throw lastError
-
-    return NextResponse.json({ event: { ...normalizeEvent(updated), source: "manual", editable: true, google_event_id: null } })
+    const rows = await getDatabase()`
+      UPDATE events SET title = ${title}, description = ${description || ""}, start_time = ${toDhakaIso(start_date)},
+        end_time = ${toDhakaIso(end_date)}, location = ${location || ""}, image_url = ${image_url || ""}, updated_at = NOW()
+      WHERE id = ${id} RETURNING *
+    `
+    if (!rows[0]) return NextResponse.json({ error: "Event not found" }, { status: 404 })
+    return NextResponse.json({ event: { ...normalizeEvent(rows[0]), source: "manual", editable: true, google_event_id: null } })
   } catch (error) {
-    console.error("[v0] Update event error:", error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update event" }, { status: 500 })
+    console.error("Update event failed", error)
+    return apiError(error, "Failed to update event")
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await requireAdmin()
     const { id } = await params
     const body = await req.json().catch(() => ({}))
-
+    const sql = getDatabase()
     if (body?.source === "google" && body?.google_event_id) {
-      const hideAttempts = [
-        { title: HIDDEN_GOOGLE_EVENT_TITLE, description: body.google_event_id, start_time: new Date().toISOString(), end_time: new Date().toISOString(), location: "hidden-google-event", created_by: null },
-        { title: HIDDEN_GOOGLE_EVENT_TITLE, description: body.google_event_id, start_time: new Date().toISOString(), end_time: new Date().toISOString(), location: "hidden-google-event" },
-      ]
-
-      let hideError: any = null
-      for (const payload of hideAttempts) {
-        const result = await supabase.from("events").insert(payload)
-        if (!result.error) {
-          hideError = null
-          break
-        }
-        hideError = result.error
-      }
-
-      if (hideError) throw hideError
-      return NextResponse.json({ success: true })
+      await sql`INSERT INTO events (title, description, start_time, end_time, location, created_by, approved)
+        VALUES (${HIDDEN_GOOGLE_EVENT_TITLE}, ${body.google_event_id}, NOW(), NOW(), 'hidden-google-event', ${user.id}, FALSE)`
+    } else {
+      await sql`DELETE FROM events WHERE id = ${id}`
     }
-
-    const { error } = await supabase.from("events").delete().eq("id", id)
-    if (error) throw error
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Delete event error:", error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to delete event" }, { status: 500 })
+    console.error("Delete event failed", error)
+    return apiError(error, "Failed to delete event")
   }
 }

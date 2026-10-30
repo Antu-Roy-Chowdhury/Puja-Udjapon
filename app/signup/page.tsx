@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -13,15 +12,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
+import { UserPlus, Sparkles } from "lucide-react"
 
-const departments = ["CSE", "EEE", "ME", "Civil", "Archi", "ETE", "ECE", "IPE", "GCE", "MSE", "CFPE", "BECM", "URP"]
+const departments = ["CSE", "EEE", "ME", "Civil", "Archi", "ETE", "ECE", "IPE", "CME", "MSE", "Che", "BECM", "URP"]
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
 export default function SignupPage() {
   const { signup } = useAuth()
+  
+  // Auto-select Series as Current Year - 1 (e.g. 2026 -> 2025)
+  const defaultSeries = (new Date().getFullYear() - 1).toString()
+
   const [formData, setFormData] = useState({
     name: "",
-    series: "",
+    series: defaultSeries,
     department: "",
     contact: "",
     email: "",
@@ -93,28 +97,31 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="font-serif text-2xl">Join Our Community</CardTitle>
-          <CardDescription>Create your RUET Puja Udjapon account</CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50/70 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-2xl rounded-2xl border-gray-100 shadow-xl bg-white p-2 sm:p-6">
+        <CardHeader className="text-center space-y-2">
+          <div className="w-12 h-12 mx-auto rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-500 shadow-sm">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <CardTitle className="font-serif text-3xl font-bold text-gray-900">Join Our Community</CardTitle>
+          <CardDescription className="text-gray-600">Create your RUET Puja Udjapon account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="name" className="text-sm font-semibold text-gray-800">Full Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   placeholder="Enter your full name"
-                  className="mt-1"
+                  className="rounded-xl border-gray-200"
                 />
               </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-800">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -122,20 +129,20 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   placeholder="your@email.com"
-                  className="mt-1"
+                  className="rounded-xl border-gray-200"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="series">Series (Year)</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="series" className="text-sm font-semibold text-gray-800">Series (Year) *</Label>
                 <Select value={formData.series} onValueChange={(value) => setFormData({ ...formData, series: value })}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="rounded-xl border-gray-200">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 31 }, (_, i) => 1995 + i).map((year) => (
+                  <SelectContent className="rounded-xl max-h-60">
+                    {Array.from({ length: 31 }, (_, i) => 1995 + i).reverse().map((year) => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
                       </SelectItem>
@@ -143,13 +150,13 @@ export default function SignupPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="department">Department</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="department" className="text-sm font-semibold text-gray-800">Department *</Label>
                 <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="rounded-xl border-gray-200">
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     {departments.map((dept) => (
                       <SelectItem key={dept} value={dept}>
                         {dept}
@@ -161,8 +168,8 @@ export default function SignupPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="contact">Contact Number</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="contact" className="text-sm font-semibold text-gray-800">Contact Number *</Label>
                 <Input
                   id="contact"
                   type="tel"
@@ -170,16 +177,16 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
                   required
                   placeholder="Your phone number"
-                  className="mt-1"
+                  className="rounded-xl border-gray-200"
                 />
               </div>
-              <div>
-                <Label htmlFor="bloodGroup">Blood Group</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="bloodGroup" className="text-sm font-semibold text-gray-800">Blood Group *</Label>
                 <Select value={formData.bloodGroup} onValueChange={(value) => setFormData({ ...formData, bloodGroup: value })}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="rounded-xl border-gray-200">
                     <SelectValue placeholder="Select blood group" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     {bloodGroups.map((group) => (
                       <SelectItem key={group} value={group}>
                         {group}
@@ -190,38 +197,42 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-800">Password *</Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
-                placeholder="Create a password"
-                className="mt-1"
+                placeholder="Create a password (min 6 characters)"
+                className="rounded-xl border-gray-200"
               />
             </div>
 
-            <div>
-              <Label htmlFor="photo">Profile Photo</Label>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="photo" className="text-sm font-semibold text-gray-800">Profile Photo</Label>
+                <span className="text-xs text-gray-500">Optional</span>
+              </div>
               <Input
                 id="photo"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
-                className="mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                className="rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full py-6 font-medium shadow-md mt-2" disabled={isLoading}>
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline">
+              <Link href="/login" className="text-orange-600 hover:underline font-semibold">
                 Sign in here
               </Link>
             </p>

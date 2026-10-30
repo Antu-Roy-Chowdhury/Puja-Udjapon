@@ -1,28 +1,14 @@
-﻿import { BanglaDate } from "@subrotosaha/bangla-date"
+import { BanglaDate } from "@subrotosaha/bangla-date"
 
-const banglaMonths = [
-  "বৈশাখ",
-  "জ্যৈষ্ঠ",
-  "আষাঢ়",
-  "শ্রাবণ",
-  "ভাদ্র",
-  "আশ্বিন",
-  "কার্তিক",
-  "অগ্রহায়ণ",
-  "পৌষ",
-  "মাঘ",
-  "ফাল্গুন",
-  "চৈত্র",
-]
+import { getDhakaDateKey } from "@/lib/dates"
 
 const banglaWeekdays = ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহস্পতি", "শুক্র", "শনি"]
 const banglaDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"]
 
+export type BanglaMonthCursor = { year: number; month: number }
+
 export function bnNumber(n: number | string) {
-  return String(n)
-    .split("")
-    .map((digit) => (/\d/.test(digit) ? banglaDigits[Number(digit)] : digit))
-    .join("")
+  return String(n).split("").map((digit) => (/\d/.test(digit) ? banglaDigits[Number(digit)] : digit)).join("")
 }
 
 export function formatBanglaDate(date = new Date(), pattern = "WWWW, DD MMMM YYYY") {
@@ -30,58 +16,49 @@ export function formatBanglaDate(date = new Date(), pattern = "WWWW, DD MMMM YYY
 }
 
 export function getBanglaTodayCard(date = new Date()) {
-  const formatted = formatBanglaDate(date, "WWWW, DD MMMM YYYY")
-  const englishDate = date.toDateString()
-  return { formatted, englishDate }
+  return { formatted: formatBanglaDate(date), englishDate: date.toDateString() }
 }
 
-export function getBanglaMonthCalendar(date = new Date()) {
-  const now = new Date(date.getFullYear(), date.getMonth(), 1)
-  const start = new Date(now.getFullYear(), 3, 14)
-  const year = now < start ? now.getFullYear() - 594 : now.getFullYear() - 593
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  const firstWeekday = firstDay.getDay()
-  const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const monthDays = [31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29, 30]
-  const cells: Array<null | { englishDay: number; banglaDay: string; banglaMonth: string; isToday: boolean }> = []
+export function getBanglaCursor(date = new Date()): BanglaMonthCursor {
+  const banglaDate = new BanglaDate(date, "bn")
+  return { year: banglaDate.getFullYear(), month: banglaDate.getMonth() }
+}
 
-  for (let i = 0; i < firstWeekday; i += 1) cells.push(null)
+export function moveBanglaMonth(cursor: BanglaMonthCursor, amount: number): BanglaMonthCursor {
+  const zeroBased = cursor.year * 12 + (cursor.month - 1) + amount
+  return { year: Math.floor(zeroBased / 12), month: ((zeroBased % 12) + 12) % 12 + 1 }
+}
+
+export function getBanglaMonthCalendar(cursor: BanglaMonthCursor) {
+  const first = BanglaDate.fromBanglaDate(cursor.year, cursor.month, 1, "bn")
+  const totalDays = first.endOfMonth().getDate()
+  const cells: Array<null | {
+    banglaDay: string
+    englishDay: number
+    englishMonth: string
+    dateKey: string
+    isToday: boolean
+  }> = Array.from({ length: first.getDay() }, () => null)
+  const todayKey = getDhakaDateKey(new Date())
 
   for (let day = 1; day <= totalDays; day += 1) {
-    const current = new Date(now.getFullYear(), now.getMonth(), day)
-    const yearStart = new Date(current.getFullYear(), 3, 14)
-    let diff = Math.floor((current.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24))
-    let banglaYear = current.getFullYear() - 593
-
-    if (current < yearStart) {
-      banglaYear -= 1
-      diff = Math.floor((current.getTime() - new Date(current.getFullYear() - 1, 3, 14).getTime()) / (1000 * 60 * 60 * 24))
-    }
-
-    let monthIndex = 0
-    while (monthIndex < monthDays.length - 1 && diff >= monthDays[monthIndex]) {
-      diff -= monthDays[monthIndex]
-      monthIndex += 1
-    }
-
-    const today = new Date()
+    const banglaDate = BanglaDate.fromBanglaDate(cursor.year, cursor.month, day, "bn")
+    const gregorianDate = new Date(Number(banglaDate))
+    const dateKey = getDhakaDateKey(gregorianDate)
     cells.push({
-      englishDay: day,
-      banglaDay: bnNumber(diff + 1),
-      banglaMonth: banglaMonths[monthIndex],
-      isToday:
-        current.getDate() === today.getDate() &&
-        current.getMonth() === today.getMonth() &&
-        current.getFullYear() === today.getFullYear(),
+      banglaDay: bnNumber(day),
+      englishDay: Number(dateKey.slice(8, 10)),
+      englishMonth: gregorianDate.toLocaleDateString("en-US", { month: "short", timeZone: "Asia/Dhaka" }),
+      dateKey,
+      isToday: dateKey === todayKey,
     })
   }
 
-  const banglaHeader = new BanglaDate(now, "bn").format("MMMM YYYY")
-
   return {
-    label: banglaHeader,
+    label: first.format("MMMM YYYY"),
     weekdays: banglaWeekdays,
     cells,
-    year: bnNumber(year),
+    year: bnNumber(cursor.year),
+    month: cursor.month,
   }
 }

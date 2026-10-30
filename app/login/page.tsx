@@ -114,7 +114,6 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                     <FormMessage />
                   </FormItem>
                 )} />
-              <p className="text-sm text-gray-500 pt-2">Hint: admin@temple.com / admin</p>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
